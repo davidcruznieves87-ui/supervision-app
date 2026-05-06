@@ -18,6 +18,36 @@ function App() {
     foto: null
   });
 
+  // 🔥 COMPRESIÓN DE IMAGEN
+  const comprimirImagen = (file) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const reader = new FileReader();
+
+      reader.readAsDataURL(file);
+
+      reader.onload = (e) => {
+        img.src = e.target.result;
+      };
+
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+
+        const MAX_WIDTH = 800;
+        const scaleSize = MAX_WIDTH / img.width;
+
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scaleSize;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        const compressed = canvas.toDataURL("image/jpeg", 0.7);
+        resolve(compressed);
+      };
+    });
+  };
+
   const agregarFalla = () => {
     if (!nuevaFalla.vlt || !nuevaFalla.falla) return;
 
@@ -158,12 +188,18 @@ function App() {
           accept="image/*"
           capture="environment"
           className="mb-3"
-          onChange={(e) =>
-            setNuevaFalla({
-              ...nuevaFalla,
-              foto: URL.createObjectURL(e.target.files[0])
-            })
-          }
+          onChange={async (e) => {
+            const file = e.target.files[0];
+
+            if (file) {
+              const imagenComprimida = await comprimirImagen(file);
+
+              setNuevaFalla({
+                ...nuevaFalla,
+                foto: imagenComprimida
+              });
+            }
+          }}
         />
 
         <motion.button
