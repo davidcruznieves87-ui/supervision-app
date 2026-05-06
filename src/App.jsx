@@ -1,7 +1,7 @@
+import { useState } from "react";
 import { db } from "./firebase";
 import { collection, addDoc } from "firebase/firestore";
-import { useState } from "react";
-import jsPDF from "jspdf";
+import { motion } from "framer-motion";
 
 function App() {
   const [sitio, setSitio] = useState("");
@@ -9,104 +9,17 @@ function App() {
   const [fechaHora] = useState(new Date().toLocaleString());
 
   const [fallas, setFallas] = useState([]);
+  const [mensaje, setMensaje] = useState("");
 
   const [nuevaFalla, setNuevaFalla] = useState({
-  vlt: "",
-  falla: "",
-  urgencia: "Baja",
-  foto: null
-});
-const guardarSupervision = async () => {
-  if (!sitio || !tecnico || fallas.length === 0) {
-    alert("Completa todos los datos");
-    return;
-  }
-
-  try {
-    await addDoc(collection(db, "supervisiones"), {
-      sitio,
-      tecnico,
-      fechaHora,
-      fallas
-    });
-
-    alert("Supervisión guardada correctamente");
-
-    setSitio("");
-    setTecnico("");
-    setFallas([]);
-
-  } catch (error) {
-    console.error(error);
-    alert("Error al guardar");
-  }
-};
-
-const convertirImagenBase64 = (url) => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "Anonymous";
-    img.src = url;
-
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0);
-
-      const dataURL = canvas.toDataURL("image/jpeg");
-      resolve(dataURL);
-    };
+    vlt: "",
+    falla: "",
+    urgencia: "Baja",
+    foto: null
   });
-};  
-const generarPDF = async () => {
-  const doc = new jsPDF();
 
-  doc.setFontSize(16);
-  doc.text("Reporte de Supervisión", 10, 10);
-
-  doc.setFontSize(12);
-  doc.text(`Sitio: ${sitio}`, 10, 20);
-  doc.text(`Técnico: ${tecnico}`, 10, 30);
-  doc.text(`Fecha: ${fechaHora}`, 10, 40);
-
-  let y = 50;
-
-  for (let i = 0; i < fallas.length; i++) {
-    const f = fallas[i];
-
-    doc.text(`Falla ${i + 1}`, 10, y);
-    y += 10;
-
-    doc.text(`VLT: ${f.vlt}`, 10, y);
-    y += 10;
-
-    doc.text(`Falla: ${f.falla}`, 10, y);
-    y += 10;
-
-    doc.text(`Urgencia: ${f.urgencia}`, 10, y);
-    y += 10;
-
-    // 👇 AGREGAR IMAGEN
-    if (f.foto) {
-      const imgBase64 = await convertirImagenBase64(f.foto);
-
-      doc.addImage(imgBase64, "JPEG", 10, y, 50, 40);
-      y += 50;
-    }
-
-    y += 10;
-  }
-
-  doc.save("reporte_supervision.pdf");
-};
-const agregarFalla = () => {
-    if (!nuevaFalla.vlt || !nuevaFalla.falla) {
-      alert("Completa los campos de la falla");
-      return;
-    }
+  const agregarFalla = () => {
+    if (!nuevaFalla.vlt || !nuevaFalla.falla) return;
 
     setFallas([...fallas, nuevaFalla]);
 
@@ -118,108 +31,205 @@ const agregarFalla = () => {
     });
   };
 
+  const eliminarFalla = (index) => {
+    const nuevasFallas = fallas.filter((_, i) => i !== index);
+    setFallas(nuevasFallas);
+  };
+
+  const guardarSupervision = async () => {
+    if (!sitio || !tecnico || fallas.length === 0) {
+      setMensaje("⚠️ Completa todos los datos");
+      setTimeout(() => setMensaje(""), 3000);
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, "supervisiones"), {
+        sitio,
+        tecnico,
+        fechaHora,
+        fallas: fallas || []
+      });
+
+      setMensaje("✅ Supervisión guardada correctamente");
+
+      setSitio("");
+      setTecnico("");
+      setFallas([]);
+
+      setTimeout(() => setMensaje(""), 3000);
+
+    } catch (error) {
+      console.error(error);
+      setMensaje("❌ Error al guardar");
+      setTimeout(() => setMensaje(""), 3000);
+    }
+  };
+
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
-      <h1>Registro de Supervisión</h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 p-3 max-w-md mx-auto">
 
-      <div>
-        <label>Sitio:</label><br />
-        <input value={sitio} onChange={(e) => setSitio(e.target.value)} />
+      {/* HEADER */}
+      <div className="bg-blue-900 text-white p-4 rounded-xl shadow mb-4 text-center">
+        <h1 className="text-lg font-bold">Sistema de Supervisión</h1>
+        <p className="text-xs opacity-80">Control Operativo de Máquinas</p>
       </div>
 
-      <br />
+      {/* MENSAJE */}
+      {mensaje && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-green-100 text-green-800 p-3 rounded-lg mb-3 text-center font-semibold"
+        >
+          {mensaje}
+        </motion.div>
+      )}
 
-      <div>
-        <label>Técnico:</label><br />
-        <input value={tecnico} onChange={(e) => setTecnico(e.target.value)} />
+      {/* DATOS GENERALES */}
+      <h2 className="text-sm font-semibold text-gray-500 mb-2">
+        DATOS GENERALES
+      </h2>
+
+      <div className="bg-white p-4 rounded-xl shadow-sm mb-3 border border-gray-200">
+
+        <input
+          className="w-full border border-gray-300 p-3 rounded-lg mb-3 focus:ring-2 focus:ring-blue-800"
+          placeholder="Sitio"
+          value={sitio}
+          onChange={(e) => setSitio(e.target.value)}
+        />
+
+        <input
+          className="w-full border border-gray-300 p-3 rounded-lg mb-3 focus:ring-2 focus:ring-blue-800"
+          placeholder="Técnico"
+          value={tecnico}
+          onChange={(e) => setTecnico(e.target.value)}
+        />
+
+        <input
+          className="w-full border border-gray-300 p-3 rounded-lg"
+          value={fechaHora}
+          readOnly
+        />
+
       </div>
 
-      <br />
+      {/* REGISTRO DE FALLAS */}
+      <h2 className="text-sm font-semibold text-gray-500 mb-2 mt-4">
+        REGISTRO DE FALLAS
+      </h2>
 
-      <div>
-        <label>Fecha y Hora:</label><br />
-        <input value={fechaHora} readOnly />
-      </div>
+      <div className="bg-white p-4 rounded-xl shadow-sm mb-3 border border-gray-200">
 
-      <hr />
-
-      <h2>Agregar Falla</h2>
-
-      <div>
-        <label>VLT:</label><br />
-        <input 
+        <input
+          className="w-full border border-gray-300 p-3 rounded-lg mb-3"
+          placeholder="VLT"
           value={nuevaFalla.vlt}
-          onChange={(e) => setNuevaFalla({ ...nuevaFalla, vlt: e.target.value })}
+          onChange={(e) =>
+            setNuevaFalla({ ...nuevaFalla, vlt: e.target.value })
+          }
         />
-      </div>
 
-      <br />
-
-      <div>
-        <label>Falla:</label><br />
-        <input 
+        <input
+          className="w-full border border-gray-300 p-3 rounded-lg mb-3"
+          placeholder="Falla"
           value={nuevaFalla.falla}
-          onChange={(e) => setNuevaFalla({ ...nuevaFalla, falla: e.target.value })}
+          onChange={(e) =>
+            setNuevaFalla({ ...nuevaFalla, falla: e.target.value })
+          }
         />
-      </div>
 
-      <br />
-
-      <div>
-        <label>Urgencia:</label><br />
         <select
+          className="w-full border border-gray-300 p-3 rounded-lg mb-3"
           value={nuevaFalla.urgencia}
-          onChange={(e) => setNuevaFalla({ ...nuevaFalla, urgencia: e.target.value })}
+          onChange={(e) =>
+            setNuevaFalla({ ...nuevaFalla, urgencia: e.target.value })
+          }
         >
           <option>Baja</option>
           <option>Media</option>
           <option>Alta</option>
           <option>Crítica</option>
         </select>
+
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="mb-3"
+          onChange={(e) =>
+            setNuevaFalla({
+              ...nuevaFalla,
+              foto: URL.createObjectURL(e.target.files[0])
+            })
+          }
+        />
+
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.02 }}
+          onClick={agregarFalla}
+          className="w-full bg-blue-900 text-white p-3 rounded-xl text-lg font-semibold shadow"
+        >
+          ➕ Agregar Falla
+        </motion.button>
       </div>
-<div>
-  <label>Foto:</label><br />
-  <input 
-    type="file" 
-    accept="image/*"
-    capture="environment"
-    onChange={(e) =>
-      setNuevaFalla({
-        ...nuevaFalla,
-        foto: URL.createObjectURL(e.target.files[0])
-      })
-    }
-  />
-</div>
 
-      <br />
+      {/* LISTA DE FALLAS */}
+      {fallas.map((f, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className={`bg-white p-4 rounded-xl shadow mb-3 border-l-4 hover:shadow-xl transition-all duration-300 ${
+            f.urgencia === "Crítica" ? "border-red-700" :
+            f.urgencia === "Alta" ? "border-orange-500" :
+            f.urgencia === "Media" ? "border-yellow-400" :
+            "border-green-500"
+          }`}
+        >
+          <div className="flex justify-end">
+            <button
+              onClick={() => eliminarFalla(i)}
+              className="text-red-600 font-bold text-lg"
+            >
+              ❌
+            </button>
+          </div>
 
-      <button onClick={agregarFalla}>Agregar Falla</button>
+          <p><b>🎰 VLT:</b> {f.vlt}</p>
+          <p><b>❌ Falla:</b> {f.falla}</p>
 
-<button onClick={guardarSupervision}>
-  Guardar Supervisión
-</button>
+          <p className={
+            f.urgencia === "Crítica" ? "text-red-700" :
+            f.urgencia === "Alta" ? "text-orange-500" :
+            f.urgencia === "Media" ? "text-yellow-500" :
+            "text-green-600"
+          }>
+            🚨 {f.urgencia}
+          </p>
 
-<button onClick={generarPDF}>
-  Descargar PDF
-</button>
-      <hr />
-
-      <h2>Fallas Registradas</h2>
-
-      {fallas.map((f, index) => (
-        <div key={index} style={{ border: "1px solid gray", padding: "10px", marginBottom: "10px" }}>
-          <p><strong>VLT:</strong> {f.vlt}</p>
-          <p><strong>Falla:</strong> {f.falla}</p>
-          <p><strong>Urgencia:</strong> {f.urgencia}</p>
-          {f.foto && (  <img src={f.foto} 
-    alt="falla" 
-    style={{ width: "150px", marginTop: "10px" }}
-  />
-)}
-        </div>
-        
+          {f.foto && (
+            <img
+              src={f.foto}
+              alt="falla"
+              className="mt-2 rounded-lg w-full max-h-40 object-cover"
+            />
+          )}
+        </motion.div>
       ))}
+
+      {/* BOTÓN GUARDAR */}
+      <motion.button
+        whileTap={{ scale: 0.95 }}
+        whileHover={{ scale: 1.02 }}
+        onClick={guardarSupervision}
+        className="w-full bg-green-700 text-white p-4 rounded-xl mt-4 font-semibold shadow-lg"
+      >
+        💾 Guardar Supervisión
+      </motion.button>
 
     </div>
   );
