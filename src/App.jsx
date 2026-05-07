@@ -1,160 +1,215 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  collection,
+  addDoc,
+  getDocs,
+} from "firebase/firestore";
+
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
 import { db } from "./firebase";
-import { collection, addDoc } from "firebase/firestore";
-import { motion } from "framer-motion";
-import { jsPDF } from "jspdf";
+import Dashboard from "./Dashboard";
+import Historial from "./Historial";
+
 import logo from "./logo.png";
 
 function App() {
+
   const [sitio, setSitio] = useState("");
   const [tecnico, setTecnico] = useState("");
-  const [fechaHora] = useState(new Date().toLocaleString());
+
+  const [falla, setFalla] = useState("");
+  const [urgencia, setUrgencia] = useState("Baja");
+
+  const [imagen, setImagen] = useState(null);
 
   const [fallas, setFallas] = useState([]);
+
   const [mensaje, setMensaje] = useState("");
 
-  const [nuevaFalla, setNuevaFalla] = useState({
-    vlt: "",
-    falla: "",
-    urgencia: "Baja",
-    foto: null,
+  const [supervisiones, setSupervisiones] = useState([]);
+
+  // 🔥 SOLO MES ACTUAL
+  const supervisionesMesActual = supervisiones.filter((s) => {
+
+    if (!s.fechaHora) return false;
+
+    const hoy = new Date();
+
+    const texto = s.fechaHora.toLowerCase();
+
+    const mesActual = hoy.getMonth() + 1;
+    const añoActual = hoy.getFullYear();
+
+    return (
+      texto.includes(`/${mesActual}/`) &&
+      texto.includes(añoActual.toString())
+    );
   });
+
+  useEffect(() => {
+    cargarSupervisiones();
+  }, []);
+
+  const cargarSupervisiones = async () => {
+
+    try {
+
+      const querySnapshot = await getDocs(
+        collection(db, "supervisiones")
+      );
+
+      const datos = [];
+
+      querySnapshot.forEach((doc) => {
+        datos.push(doc.data());
+      });
+
+      setSupervisiones(datos);
+
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // 🔥 RECUPERAR SUPERVISION
+  const recuperarSupervision = (supervision) => {
+
+    const fallasRecuperadas = (supervision.fallas || []).map((f) => ({
+
+      descripcion:
+        f.descripcion ||
+        f.falla ||
+        f.nombre ||
+        "",
+
+      urgencia:
+        f.urgencia ||
+        "Baja",
+
+      imagen:
+        f.imagen ||
+        f.image ||
+        f.foto ||
+        null,
+    }));
+
+    setSitio(supervision.sitio || "");
+    setTecnico(supervision.tecnico || "");
+
+    setFallas(fallasRecuperadas);
+
+    setFalla("");
+    setUrgencia("Baja");
+    setImagen(null);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+
+    setMensaje("♻️ Supervisión recuperada correctamente");
+
+    setTimeout(() => {
+      setMensaje("");
+    }, 3000);
+  };
 
   // 🔥 COMPRESIÓN DE IMAGEN
   const comprimirImagen = (file) => {
+
     return new Promise((resolve) => {
-      const img = new Image();
+
       const reader = new FileReader();
 
       reader.readAsDataURL(file);
 
-      reader.onload = (e) => {
-        img.src = e.target.result;
-      };
+      reader.onload = (event) => {
 
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
+        const img = new Image();
 
-        const MAX_WIDTH = 800;
-        const scaleSize = MAX_WIDTH / img.width;
+        img.src = event.target.result;
 
-        canvas.width = MAX_WIDTH;
-        canvas.height = img.height * scaleSize;
+        img.onload = () => {
 
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const canvas = document.createElement("canvas");
 
-        const compressed = canvas.toDataURL("image/jpeg", 0.7);
+          const MAX_WIDTH = 900;
 
-        resolve(compressed);
+          const scaleSize = MAX_WIDTH / img.width;
+
+          canvas.width = MAX_WIDTH;
+          canvas.height = img.height * scaleSize;
+
+          const ctx = canvas.getContext("2d");
+
+          ctx.drawImage(
+            img,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
+
+          const compressedBase64 = canvas.toDataURL(
+            "image/jpeg",
+            0.6
+          );
+
+          resolve(compressedBase64);
+        };
       };
     });
   };
 
-  // ➕ AGREGAR FALLA
-  const agregarFalla = () => {
-    if (!nuevaFalla.vlt || !nuevaFalla.falla) return;
+  // 🔥 AGREGAR FALLA
+  const agregarFalla = async () => {
+
+    if (!falla) return;
+
+    let imagenComprimida = null;
+
+    if (imagen) {
+      imagenComprimida = await comprimirImagen(imagen);
+    }
+
+    const nuevaFalla = {
+      descripcion: falla,
+      urgencia,
+      imagen: imagenComprimida,
+    };
 
     setFallas([...fallas, nuevaFalla]);
 
-    setNuevaFalla({
-      vlt: "",
-      falla: "",
-      urgencia: "Baja",
-      foto: null,
-    });
+    setFalla("");
+    setUrgencia("Baja");
+    setImagen(null);
   };
 
-  // ❌ ELIMINAR FALLA
-  const eliminarFalla = (index) => {
-    const nuevasFallas = fallas.filter((_, i) => i !== index);
-    setFallas(nuevasFallas);
-  };
-
-  // 📄 PDF PROFESIONAL
-  const generarPDF = () => {
-    const doc = new jsPDF();
-
-    let y = 10;
-
-    // 🔥 LOGO
-    doc.addImage(logo, "PNG", 10, y, 30, 30);
-
-    // 🔥 TITULO
-    doc.setFontSize(16);
-    doc.text("REPORTE DE SUPERVISIÓN", 50, 20);
-
-    y += 40;
-
-    doc.setFontSize(11);
-
-    doc.text(`Sitio: ${sitio}`, 10, y);
-    y += 8;
-
-    doc.text(`Técnico: ${tecnico}`, 10, y);
-    y += 8;
-
-    doc.text(`Fecha: ${fechaHora}`, 10, y);
-    y += 12;
-
-    fallas.forEach((f, i) => {
-      doc.setFont(undefined, "bold");
-      doc.text(`Falla ${i + 1}`, 10, y);
-
-      y += 8;
-
-      doc.setFont(undefined, "normal");
-
-      doc.text(`VLT: ${f.vlt}`, 12, y);
-      y += 6;
-
-      doc.text(`Detalle: ${f.falla}`, 12, y);
-      y += 6;
-
-      doc.text(`Urgencia: ${f.urgencia}`, 12, y);
-      y += 10;
-
-      // 📸 FOTO
-      if (f.foto) {
-        try {
-          doc.addImage(f.foto, "JPEG", 12, y, 60, 45);
-          y += 50;
-        } catch (error) {
-          console.log(error);
-        }
-      }
-
-      y += 8;
-
-      // 📄 NUEVA PAGINA
-      if (y > 250) {
-        doc.addPage();
-        y = 10;
-      }
-    });
-
-    doc.save("reporte_supervision.pdf");
-  };
-
-  // 💾 GUARDAR
+  // 🔥 GUARDAR
   const guardarSupervision = async () => {
-    if (!sitio || !tecnico || fallas.length === 0) {
-      setMensaje("⚠️ Completa todos los datos");
 
-      setTimeout(() => {
-        setMensaje("");
-      }, 3000);
+    if (!sitio || !tecnico || fallas.length === 0) {
+
+      setMensaje("⚠️ Completa todos los campos");
 
       return;
     }
 
+    const fechaHora = new Date().toLocaleString();
+
     try {
-      await addDoc(collection(db, "supervisiones"), {
-        sitio,
-        tecnico,
-        fechaHora,
-        fallas: fallas || [],
-      });
+
+      await addDoc(
+        collection(db, "supervisiones"),
+        {
+          sitio,
+          tecnico,
+          fechaHora,
+          fallas,
+        }
+      );
 
       setMensaje("✅ Supervisión guardada correctamente");
 
@@ -162,221 +217,295 @@ function App() {
       setTecnico("");
       setFallas([]);
 
+      cargarSupervisiones();
+
       setTimeout(() => {
         setMensaje("");
       }, 3000);
 
     } catch (error) {
-      console.error(error);
+
+      console.log(error);
 
       setMensaje("❌ Error al guardar");
-
-      setTimeout(() => {
-        setMensaje("");
-      }, 3000);
     }
   };
 
+  // 🔥 PDF
+  const descargarPDF = () => {
+
+    const doc = new jsPDF();
+
+    doc.addImage(logo, "PNG", 15, 10, 30, 30);
+
+    doc.setFontSize(22);
+
+    doc.text(
+      "Sistema de Supervisión",
+      105,
+      20,
+      null,
+      null,
+      "center"
+    );
+
+    doc.setFontSize(12);
+
+    doc.text(`Sitio: ${sitio}`, 14, 50);
+
+    doc.text(`Técnico: ${tecnico}`, 14, 58);
+
+    doc.text(
+      `Fecha: ${new Date().toLocaleString()}`,
+      14,
+      66
+    );
+
+    const body = fallas.map((f, index) => [
+      index + 1,
+      f.descripcion,
+      f.urgencia,
+    ]);
+
+    autoTable(doc, {
+      startY: 75,
+      head: [["#", "Falla", "Urgencia"]],
+      body,
+    });
+
+    let y = doc.lastAutoTable.finalY + 10;
+
+    fallas.forEach((f, index) => {
+
+      if (f.imagen) {
+
+        if (y > 240) {
+          doc.addPage();
+          y = 20;
+        }
+
+        doc.text(
+          `Falla ${index + 1}`,
+          14,
+          y
+        );
+
+        doc.addImage(
+          f.imagen,
+          "JPEG",
+          14,
+          y + 5,
+          80,
+          80
+        );
+
+        y += 95;
+      }
+    });
+
+    doc.save("supervision.pdf");
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 p-3 max-w-md mx-auto">
 
-      {/* HEADER */}
-      <div className="bg-blue-900 text-white p-4 rounded-xl shadow mb-4">
+    <div className="min-h-screen bg-gray-100 p-3">
 
-        <div className="flex items-center justify-center gap-3">
+      <div className="bg-white rounded-3xl shadow-2xl p-4 md:p-6 max-w-6xl mx-auto border border-gray-200">
+
+        {/* LOGO */}
+        <div className="flex justify-center mb-5">
 
           <img
             src={logo}
             alt="logo"
-            className="w-14 h-14 rounded-full object-cover border-2 border-white"
+            className="w-32 md:w-40 rounded-full shadow-xl"
           />
-
-          <div className="text-left">
-            <h1 className="font-bold text-lg">
-              Sistema de Supervisión
-            </h1>
-
-            <p className="text-xs opacity-80">
-              Equipo Técnico Tijuana
-            </p>
-          </div>
 
         </div>
 
-      </div>
+        {/* TITULO */}
+        <h1 className="text-4xl md:text-6xl font-black text-center mb-3 text-slate-800 leading-tight">
+          Sistema de Supervisión
+        </h1>
 
-      {/* MENSAJE */}
-      {mensaje && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-green-100 text-green-800 p-3 rounded-lg mb-3 text-center font-semibold"
-        >
-          {mensaje}
-        </motion.div>
-      )}
+        {/* SUBTITULO */}
+        <p className="text-center text-gray-600 text-lg md:text-2xl mb-8 tracking-wide">
+          Equipo Técnico Tijuana
+        </p>
 
-      {/* DATOS GENERALES */}
-      <div className="bg-white p-4 rounded-xl shadow-sm mb-3 border border-gray-200">
+        {/* MENSAJE */}
+        {mensaje && (
 
-        <input
-          className="w-full border border-gray-300 p-3 rounded-lg mb-3"
-          placeholder="Sitio"
-          value={sitio}
-          onChange={(e) => setSitio(e.target.value)}
-        />
-
-        <input
-          className="w-full border border-gray-300 p-3 rounded-lg mb-3"
-          placeholder="Técnico"
-          value={tecnico}
-          onChange={(e) => setTecnico(e.target.value)}
-        />
-
-        <input
-          className="w-full border border-gray-300 p-3 rounded-lg"
-          value={fechaHora}
-          readOnly
-        />
-
-      </div>
-
-      {/* REGISTRO DE FALLAS */}
-      <div className="bg-white p-4 rounded-xl shadow-sm mb-3 border border-gray-200">
-
-        <input
-          className="w-full border border-gray-300 p-3 rounded-lg mb-3"
-          placeholder="VLT"
-          value={nuevaFalla.vlt}
-          onChange={(e) =>
-            setNuevaFalla({
-              ...nuevaFalla,
-              vlt: e.target.value,
-            })
-          }
-        />
-
-        <input
-          className="w-full border border-gray-300 p-3 rounded-lg mb-3"
-          placeholder="Falla"
-          value={nuevaFalla.falla}
-          onChange={(e) =>
-            setNuevaFalla({
-              ...nuevaFalla,
-              falla: e.target.value,
-            })
-          }
-        />
-
-        <select
-          className="w-full border border-gray-300 p-3 rounded-lg mb-3"
-          value={nuevaFalla.urgencia}
-          onChange={(e) =>
-            setNuevaFalla({
-              ...nuevaFalla,
-              urgencia: e.target.value,
-            })
-          }
-        >
-          <option>Baja</option>
-          <option>Media</option>
-          <option>Alta</option>
-          <option>Crítica</option>
-        </select>
-
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="mb-3"
-          onChange={async (e) => {
-            const file = e.target.files[0];
-
-            if (file) {
-              const imagenComprimida = await comprimirImagen(file);
-
-              setNuevaFalla({
-                ...nuevaFalla,
-                foto: imagenComprimida,
-              });
-            }
-          }}
-        />
-
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          whileHover={{ scale: 1.02 }}
-          onClick={agregarFalla}
-          className="w-full bg-blue-900 text-white p-3 rounded-xl text-lg font-semibold shadow"
-        >
-          ➕ Agregar Falla
-        </motion.button>
-
-      </div>
-
-      {/* LISTA DE FALLAS */}
-      {fallas.map((f, i) => (
-        <motion.div
-          key={i}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className={`bg-white p-4 rounded-xl shadow mb-3 border-l-4 hover:shadow-xl transition-all duration-300 ${
-            f.urgencia === "Crítica"
-              ? "border-red-700"
-              : f.urgencia === "Alta"
-              ? "border-orange-500"
-              : f.urgencia === "Media"
-              ? "border-yellow-400"
-              : "border-green-500"
-          }`}
-        >
-          <div className="flex justify-end">
-            <button
-              onClick={() => eliminarFalla(i)}
-              className="text-red-600 font-bold text-lg"
-            >
-              ❌
-            </button>
+          <div className="bg-cyan-100 border border-cyan-400 text-cyan-800 p-4 rounded-2xl text-center mb-6 font-bold text-lg">
+            {mensaje}
           </div>
+        )}
 
-          <p><b>🎰 VLT:</b> {f.vlt}</p>
+        {/* FORMULARIO */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
 
-          <p><b>❌ Falla:</b> {f.falla}</p>
+          <input
+            type="text"
+            placeholder="📍 Sitio"
+            value={sitio}
+            onChange={(e) => setSitio(e.target.value)}
+            className="bg-white border border-gray-300 text-gray-800 placeholder-gray-400 rounded-2xl p-5 text-xl outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/40"
+          />
 
-          <p>
-            <b>🚨 Urgencia:</b> {f.urgencia}
-          </p>
+          <input
+            type="text"
+            placeholder="👨‍🔧 Técnico"
+            value={tecnico}
+            onChange={(e) => setTecnico(e.target.value)}
+            className="bg-white border border-gray-300 text-gray-800 placeholder-gray-400 rounded-2xl p-5 text-xl outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/40"
+          />
 
-          {f.foto && (
-            <img
-              src={f.foto}
-              alt="falla"
-              className="mt-3 rounded-lg w-full max-h-52 object-cover"
-            />
-          )}
-        </motion.div>
-      ))}
+          <input
+            type="text"
+            value={new Date().toLocaleString()}
+            disabled
+            className="bg-gray-100 border border-gray-300 text-gray-700 rounded-2xl p-5 text-xl"
+          />
 
-      {/* BOTÓN GUARDAR */}
-      <motion.button
-        whileTap={{ scale: 0.95 }}
-        whileHover={{ scale: 1.02 }}
-        onClick={guardarSupervision}
-        className="w-full bg-green-700 text-white p-4 rounded-xl mt-4 font-semibold shadow-lg"
+        </div>
+
+        {/* FALLAS */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-5 mb-6">
+
+          <input
+            type="text"
+            placeholder="⚠️ Descripción de falla"
+            value={falla}
+            onChange={(e) => setFalla(e.target.value)}
+            className="bg-white border border-gray-300 text-gray-800 placeholder-gray-400 rounded-2xl p-5 text-xl outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/40"
+          />
+
+          <select
+            value={urgencia}
+            onChange={(e) => setUrgencia(e.target.value)}
+            className="bg-white border border-gray-300 text-gray-800 rounded-2xl p-5 text-xl"
+          >
+
+            <option>Baja</option>
+            <option>Media</option>
+            <option>Alta</option>
+            <option>Crítica</option>
+
+          </select>
+
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={(e) => setImagen(e.target.files[0])}
+            className="bg-white border border-gray-300 text-gray-700 rounded-2xl p-5 text-lg"
+          />
+
+          <button
+            onClick={agregarFalla}
+            className="bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xl px-6 py-5 rounded-2xl shadow-xl active:scale-95 transition-all"
+          >
+            ➕ Agregar Falla
+          </button>
+
+        </div>
+
+        {/* LISTA FALLAS */}
+        <div className="space-y-5 mb-8">
+
+          {fallas.map((f, index) => (
+
+            <div
+              key={index}
+              className="bg-gray-50 border border-gray-200 rounded-3xl p-6 shadow"
+            >
+
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-5">
+
+                <div>
+
+                  <p className="font-black text-slate-800 text-2xl">
+                    {f.descripcion}
+                  </p>
+
+                  <p className="text-lg text-gray-600 mt-2">
+                    Urgencia: {f.urgencia}
+                  </p>
+
+                </div>
+
+                <button
+                  onClick={() => {
+
+                    const nuevas = [...fallas];
+
+                    nuevas.splice(index, 1);
+
+                    setFallas(nuevas);
+                  }}
+                  className="bg-red-500 hover:bg-red-400 text-white px-6 py-4 rounded-2xl font-black text-lg"
+                >
+                  Eliminar
+                </button>
+
+              </div>
+
+              {f.imagen && (
+
+                <img
+                  src={f.imagen}
+                  alt="falla"
+                  className="mt-5 rounded-2xl w-full max-w-sm border border-gray-300"
+                />
+              )}
+
+            </div>
+          ))}
+
+        </div>
+
+        {/* BOTONES */}
+        <div className="flex flex-col md:flex-row justify-center gap-5 mb-8">
+
+          <button
+            onClick={guardarSupervision}
+            className="bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xl px-8 py-5 rounded-2xl shadow-xl active:scale-95 transition-all w-full md:w-auto"
+          >
+            💾 Guardar Supervisión
+          </button>
+
+          <button
+            onClick={descargarPDF}
+            className="bg-slate-800 hover:bg-slate-700 text-white font-black text-xl px-8 py-5 rounded-2xl shadow-xl active:scale-95 transition-all w-full md:w-auto"
+          >
+            📄 Descargar PDF
+          </button>
+
+        </div>
+
+        {/* DASHBOARD */}
+        <Dashboard supervisiones={supervisionesMesActual} />
+
+        {/* HISTORIAL */}
+        <Historial
+          supervisiones={supervisionesMesActual}
+          recuperarSupervision={recuperarSupervision}
+        />
+
+      </div>
+
+      {/* BOTÓN FLOTANTE */}
+      <button
+        onClick={() =>
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+          })
+        }
+        className="fixed bottom-6 right-6 bg-cyan-500 text-black w-16 h-16 rounded-full shadow-2xl text-3xl font-black z-50"
       >
-        💾 Guardar Supervisión
-      </motion.button>
-
-      {/* BOTÓN PDF */}
-      <motion.button
-        whileTap={{ scale: 0.95 }}
-        whileHover={{ scale: 1.02 }}
-        onClick={generarPDF}
-        className="w-full bg-gray-800 text-white p-4 rounded-xl mt-2 font-semibold shadow-lg"
-      >
-        📄 Descargar PDF
-      </motion.button>
+        ⬆
+      </button>
 
     </div>
   );
