@@ -135,7 +135,7 @@ function App() {
 
           const canvas = document.createElement("canvas");
 
-          const MAX_WIDTH = 900;
+          const MAX_WIDTH = 150;
 
           const scaleSize = MAX_WIDTH / img.width;
 
