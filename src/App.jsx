@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import {
   collection,
@@ -29,7 +30,12 @@ function App() {
   const [mensaje, setMensaje] = useState("");
 
   const [supervisiones, setSupervisiones] = useState([]);
-const datosRestaurados = useRef(false);
+
+  // 🔥 ONLINE / OFFLINE
+  const [online, setOnline] = useState(navigator.onLine);
+
+  const datosRestaurados = useRef(false);
+
   // 🔥 SOLO MES ACTUAL
   const supervisionesMesActual = supervisiones.filter((s) => {
 
@@ -48,63 +54,116 @@ const datosRestaurados = useRef(false);
     );
   });
 
-useEffect(() => {
+  // 🔥 CARGAR + RECUPERAR BORRADOR
+  useEffect(() => {
 
-  cargarSupervisiones();
+    cargarSupervisiones();
 
-  // 🔥 RECUPERAR BORRADOR
-  const borrador = localStorage.getItem("supervision_borrador");
+    const borrador = localStorage.getItem("supervision_borrador");
 
-  if (borrador) {
+    if (borrador) {
 
-    try {
+      try {
 
-      const datos = JSON.parse(borrador);
+        const datos = JSON.parse(borrador);
 
-      setSitio(datos.sitio || "");
-      setTecnico(datos.tecnico || "");
-      setFallas(datos.fallas || []);
+        setSitio(datos.sitio || "");
+        setTecnico(datos.tecnico || "");
+        setFallas(datos.fallas || []);
 
-      datosRestaurados.current = true;
+        datosRestaurados.current = true;
 
-      setMensaje("♻️ Se recuperó un borrador automáticamente");
+        setMensaje("♻️ Se recuperó un borrador automáticamente");
 
-      setTimeout(() => {
-        setMensaje("");
-      }, 4000);
+        setTimeout(() => {
+          setMensaje("");
+        }, 4000);
 
-    } catch (error) {
-      console.log(error);
+      } catch (error) {
+        console.log(error);
+      }
     }
-  }
 
-}, []);
+  }, []);
 
+  // 🔥 AUTOGUARDADO
+  useEffect(() => {
 
-// 🔥 AUTOGUARDADO
-useEffect(() => {
+    if (
+      !sitio &&
+      !tecnico &&
+      fallas.length === 0
+    ) {
+      return;
+    }
 
-  // 🔥 EVITA GUARDAR VACÍO
-  if (
-    !sitio &&
-    !tecnico &&
-    fallas.length === 0
-  ) {
-    return;
-  }
+    const borrador = {
+      sitio,
+      tecnico,
+      fallas,
+    };
 
-  const borrador = {
-    sitio,
-    tecnico,
-    fallas,
-  };
+    localStorage.setItem(
+      "supervision_borrador",
+      JSON.stringify(borrador)
+    );
 
-  localStorage.setItem(
-    "supervision_borrador",
-    JSON.stringify(borrador)
-  );
+  }, [sitio, tecnico, fallas]);
 
-}, [sitio, tecnico, fallas]);
+  // 🔥 DETECTAR INTERNET + SINCRONIZAR
+  useEffect(() => {
+
+    const actualizarEstado = async () => {
+
+      setOnline(navigator.onLine);
+
+      // 🔥 SI VOLVIÓ INTERNET
+      if (navigator.onLine) {
+
+        const pendientes = JSON.parse(
+          localStorage.getItem("supervisiones_pendientes") || "[]"
+        );
+
+        if (pendientes.length > 0) {
+
+          try {
+
+            for (const supervision of pendientes) {
+
+              await addDoc(
+                collection(db, "supervisiones"),
+                supervision
+              );
+            }
+
+            localStorage.removeItem("supervisiones_pendientes");
+
+            cargarSupervisiones();
+
+            setMensaje(
+              `☁️ ${pendientes.length} supervisión(es) sincronizada(s)`
+            );
+
+            setTimeout(() => {
+              setMensaje("");
+            }, 4000);
+
+          } catch (error) {
+            console.log(error);
+          }
+        }
+      }
+    };
+
+    window.addEventListener("online", actualizarEstado);
+    window.addEventListener("offline", actualizarEstado);
+
+    return () => {
+      window.removeEventListener("online", actualizarEstado);
+      window.removeEventListener("offline", actualizarEstado);
+    };
+
+  }, []);
 
   const cargarSupervisiones = async () => {
 
@@ -251,34 +310,56 @@ useEffect(() => {
       return;
     }
 
-    const fechaHora = new Date().toLocaleString();
+    const supervision = {
+      sitio,
+      tecnico,
+      fechaHora: new Date().toLocaleString(),
+      fallas,
+    };
 
     try {
 
-      await addDoc(
-        collection(db, "supervisiones"),
-        {
-          sitio,
-          tecnico,
-          fechaHora,
-          fallas,
-        }
-      );
+      // 🔥 SI HAY INTERNET
+      if (online) {
 
-      setMensaje("✅ Supervisión guardada correctamente");
+        await addDoc(
+          collection(db, "supervisiones"),
+          supervision
+        );
 
-     setSitio("");
-setTecnico("");
-setFallas([]);
+        setMensaje("✅ Supervisión guardada correctamente");
 
-// 🔥 BORRAR BORRADOR
-localStorage.removeItem("supervision_borrador");
+        cargarSupervisiones();
 
-      cargarSupervisiones();
+      } else {
+
+        // 🔥 GUARDAR LOCALMENTE
+        const pendientes = JSON.parse(
+          localStorage.getItem("supervisiones_pendientes") || "[]"
+        );
+
+        pendientes.push(supervision);
+
+        localStorage.setItem(
+          "supervisiones_pendientes",
+          JSON.stringify(pendientes)
+        );
+
+        setMensaje(
+          "📴 Supervisión guardada offline • Se sincronizará automáticamente"
+        );
+      }
+
+      setSitio("");
+      setTecnico("");
+      setFallas([]);
+
+      // 🔥 BORRAR BORRADOR
+      localStorage.removeItem("supervision_borrador");
 
       setTimeout(() => {
         setMensaje("");
-      }, 3000);
+      }, 4000);
 
     } catch (error) {
 
@@ -368,6 +449,19 @@ localStorage.removeItem("supervision_borrador");
     <div className="min-h-screen bg-gray-100 p-3">
 
       <div className="bg-white rounded-3xl shadow-2xl p-4 md:p-6 max-w-6xl mx-auto border border-gray-200">
+
+        {/* 🔥 ESTADO INTERNET */}
+        <div
+          className={`mb-6 p-4 rounded-2xl text-center font-black text-lg shadow-lg ${
+            online
+              ? "bg-emerald-100 text-emerald-700 border border-emerald-300"
+              : "bg-red-100 text-red-700 border border-red-300"
+          }`}
+        >
+          {online
+            ? "🟢 Conectado a internet"
+            : "🔴 Sin conexión • Trabajando en modo offline"}
+        </div>
 
         {/* LOGO */}
         <div className="flex justify-center mb-5">
@@ -537,25 +631,27 @@ localStorage.removeItem("supervision_borrador");
           >
             📄 Descargar PDF
           </button>
-<button
-  onClick={() => {
 
-    localStorage.removeItem("supervision_borrador");
+          <button
+            onClick={() => {
 
-    setSitio("");
-    setTecnico("");
-    setFallas([]);
+              localStorage.removeItem("supervision_borrador");
 
-    setMensaje("🗑️ Borrador eliminado");
+              setSitio("");
+              setTecnico("");
+              setFallas([]);
 
-    setTimeout(() => {
-      setMensaje("");
-    }, 3000);
-  }}
-  className="bg-red-500 hover:bg-red-400 text-white font-black text-xl px-8 py-5 rounded-2xl shadow-xl active:scale-95 transition-all w-full md:w-auto"
->
-  🗑️ Limpiar
-</button>
+              setMensaje("🗑️ Borrador eliminado");
+
+              setTimeout(() => {
+                setMensaje("");
+              }, 3000);
+            }}
+            className="bg-red-500 hover:bg-red-400 text-white font-black text-xl px-8 py-5 rounded-2xl shadow-xl active:scale-95 transition-all w-full md:w-auto"
+          >
+            🗑️ Limpiar
+          </button>
+
         </div>
 
         {/* DASHBOARD */}
