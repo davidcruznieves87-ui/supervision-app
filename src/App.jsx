@@ -19,7 +19,15 @@ function App() {
 
   const [sitio, setSitio] = useState("");
   const [tecnico, setTecnico] = useState("");
+const fecha = new Date();
 
+const fechaHora = fecha.toLocaleString();
+
+const año = fecha.getFullYear();
+
+const consecutivo = Date.now().toString().slice(-6);
+
+const folio = `SUP-${año}-${consecutivo}`;
   const [falla, setFalla] = useState("");
   const [urgencia, setUrgencia] = useState("Baja");
 
@@ -130,10 +138,16 @@ function App() {
 
             for (const supervision of pendientes) {
 
-              await addDoc(
-                collection(db, "supervisiones"),
-                supervision
-              );
+             await addDoc(
+  collection(db, "supervisiones"),
+  {
+    folio,
+    sitio,
+    tecnico,
+    fechaHora,
+    fallas,
+  }
+)
             }
 
             localStorage.removeItem("supervisiones_pendientes");
@@ -370,79 +384,214 @@ function App() {
   };
 
   // 🔥 PDF
-  const descargarPDF = () => {
 
-    const doc = new jsPDF();
+const descargarPDF = () => {
 
-    doc.addImage(logo, "PNG", 15, 10, 30, 30);
+  const fecha = new Date();
 
-    doc.setFontSize(22);
+  const año = fecha.getFullYear();
 
-    doc.text(
-      "Sistema de Supervisión",
-      105,
-      20,
-      null,
-      null,
-      "center"
-    );
+  const consecutivo = Date.now().toString().slice(-6);
 
-    doc.setFontSize(12);
+  const folio = `SUP-${año}-${consecutivo}`;
 
-    doc.text(`Sitio: ${sitio}`, 14, 50);
+  const doc = new jsPDF();
 
-    doc.text(`Técnico: ${tecnico}`, 14, 58);
+  // 🔥 HEADER
+  doc.setFillColor(6, 182, 212);
+  doc.rect(0, 0, 220, 40, "F");
 
-    doc.text(
-      `Fecha: ${new Date().toLocaleString()}`,
-      14,
-      66
-    );
+  doc.addImage(logo, "PNG", 15, 5, 28, 28);
 
-    const body = fallas.map((f, index) => [
-      index + 1,
-      f.descripcion,
-      f.urgencia,
-    ]);
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(24);
+  doc.setFont("helvetica", "bold");
 
-    autoTable(doc, {
-      startY: 75,
-      head: [["#", "Falla", "Urgencia"]],
-      body,
-    });
+  doc.text(
+    "Supervision de Salas Tijuana",
+    105,
+    18,
+    null,
+    null,
+    "center"
+  );
 
-    let y = doc.lastAutoTable.finalY + 10;
+  doc.setFontSize(12);
 
-    fallas.forEach((f, index) => {
+  doc.text(
+    "Supervisor David Cruz Nieves",
+    105,
+    28,
+    null,
+    null,
+    "center"
+  );
 
-      if (f.imagen) {
+  // 🔥 INFORMACIÓN GENERAL
+  doc.setTextColor(0, 0, 0);
 
-        if (y > 240) {
-          doc.addPage();
-          y = 20;
-        }
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
 
-        doc.text(
-          `Falla ${index + 1}`,
-          14,
-          y
-        );
+  doc.text("Información", 14, 55);
 
-        doc.addImage(
-          f.imagen,
-          "JPEG",
-          14,
-          y + 5,
-          80,
-          80
-        );
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(12);
 
-        y += 95;
+  doc.text(`Folio: ${folio}`, 14, 65);
+
+  doc.text(`Sitio: ${sitio}`, 14, 73);
+
+  doc.text(`Técnico: ${tecnico}`, 14, 81);
+
+  doc.text(
+    `Fecha: ${new Date().toLocaleString()}`,
+    14,
+    89
+  );
+
+  // 🔥 RESUMEN EJECUTIVO
+  const totalFallas = fallas.length;
+
+  const criticas = fallas.filter(
+    (f) => f.urgencia === "Crítica"
+  ).length;
+
+  const altas = fallas.filter(
+    (f) => f.urgencia === "Alta"
+  ).length;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+
+  doc.text("Resumen de Fallas", 14, 105);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(12);
+
+  doc.text(
+    `Total de fallas detectadas: ${totalFallas}`,
+    14,
+    115
+  );
+
+  doc.text(
+    `Fallas críticas: ${criticas}`,
+    14,
+    123
+  );
+
+  doc.text(
+    `Fallas altas: ${altas}`,
+    14,
+    131
+  );
+
+  let conclusion = "Operación estable.";
+
+  if (criticas >= 1) {
+    conclusion =
+      "Se detectaron fallas críticas que requieren atención inmediata.";
+  } else if (altas >= 2) {
+    conclusion =
+      "Se detectaron incidencias de prioridad alta.";
+  }
+
+  doc.setFont("helvetica", "bold");
+
+  doc.text("Conclusión:", 14, 145);
+
+  doc.setFont("helvetica", "normal");
+
+  doc.text(conclusion, 14, 153);
+
+  // 🔥 TABLA
+  const body = fallas.map((f, index) => [
+    index + 1,
+    f.descripcion,
+    f.urgencia,
+  ]);
+
+  autoTable(doc, {
+    startY: 165,
+
+    head: [["#", "Falla Detectada", "Urgencia"]],
+
+    body,
+
+    styles: {
+      fontSize: 11,
+      cellPadding: 4,
+    },
+
+    headStyles: {
+      fillColor: [6, 182, 212],
+      textColor: [255, 255, 255],
+      fontStyle: "bold",
+    },
+  });
+
+  // 🔥 IMÁGENES
+  let y = doc.lastAutoTable.finalY + 15;
+
+  fallas.forEach((f, index) => {
+
+    if (f.imagen) {
+
+      if (y > 220) {
+        doc.addPage();
+        y = 20;
       }
-    });
 
-    doc.save("supervision.pdf");
-  };
+      doc.setFont("helvetica", "bold");
+
+      doc.text(
+        `Evidencia Fotográfica ${index + 1}`,
+        14,
+        y
+      );
+
+      doc.addImage(
+        f.imagen,
+        "JPEG",
+        14,
+        y + 5,
+        90,
+        70
+      );
+
+      y += 85;
+    }
+  });
+
+  // 🔥 FIRMA
+  if (y > 240) {
+    doc.addPage();
+    y = 40;
+  }
+
+  doc.line(20, y + 25, 90, y + 25);
+
+  doc.text("Supervisor Responsable", 30, y + 35);
+
+  // 🔥 FOOTER
+  const totalPages = doc.internal.getNumberOfPages();
+
+  for (let i = 1; i <= totalPages; i++) {
+
+    doc.setPage(i);
+
+    doc.setFontSize(10);
+
+    doc.text(
+      `Página ${i} de ${totalPages}`,
+      170,
+      290
+    );
+  }
+
+  doc.save(`${folio}.pdf`);
+};
 
   return (
 
