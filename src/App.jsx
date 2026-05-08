@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   collection,
   addDoc,
@@ -29,7 +29,7 @@ function App() {
   const [mensaje, setMensaje] = useState("");
 
   const [supervisiones, setSupervisiones] = useState([]);
-
+const datosRestaurados = useRef(false);
   // 🔥 SOLO MES ACTUAL
   const supervisionesMesActual = supervisiones.filter((s) => {
 
@@ -48,9 +48,63 @@ function App() {
     );
   });
 
-  useEffect(() => {
-    cargarSupervisiones();
-  }, []);
+useEffect(() => {
+
+  cargarSupervisiones();
+
+  // 🔥 RECUPERAR BORRADOR
+  const borrador = localStorage.getItem("supervision_borrador");
+
+  if (borrador) {
+
+    try {
+
+      const datos = JSON.parse(borrador);
+
+      setSitio(datos.sitio || "");
+      setTecnico(datos.tecnico || "");
+      setFallas(datos.fallas || []);
+
+      datosRestaurados.current = true;
+
+      setMensaje("♻️ Se recuperó un borrador automáticamente");
+
+      setTimeout(() => {
+        setMensaje("");
+      }, 4000);
+
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+}, []);
+
+
+// 🔥 AUTOGUARDADO
+useEffect(() => {
+
+  // 🔥 EVITA GUARDAR VACÍO
+  if (
+    !sitio &&
+    !tecnico &&
+    fallas.length === 0
+  ) {
+    return;
+  }
+
+  const borrador = {
+    sitio,
+    tecnico,
+    fallas,
+  };
+
+  localStorage.setItem(
+    "supervision_borrador",
+    JSON.stringify(borrador)
+  );
+
+}, [sitio, tecnico, fallas]);
 
   const cargarSupervisiones = async () => {
 
@@ -213,9 +267,12 @@ function App() {
 
       setMensaje("✅ Supervisión guardada correctamente");
 
-      setSitio("");
-      setTecnico("");
-      setFallas([]);
+     setSitio("");
+setTecnico("");
+setFallas([]);
+
+// 🔥 BORRAR BORRADOR
+localStorage.removeItem("supervision_borrador");
 
       cargarSupervisiones();
 
@@ -480,7 +537,25 @@ function App() {
           >
             📄 Descargar PDF
           </button>
+<button
+  onClick={() => {
 
+    localStorage.removeItem("supervision_borrador");
+
+    setSitio("");
+    setTecnico("");
+    setFallas([]);
+
+    setMensaje("🗑️ Borrador eliminado");
+
+    setTimeout(() => {
+      setMensaje("");
+    }, 3000);
+  }}
+  className="bg-red-500 hover:bg-red-400 text-white font-black text-xl px-8 py-5 rounded-2xl shadow-xl active:scale-95 transition-all w-full md:w-auto"
+>
+  🗑️ Limpiar
+</button>
         </div>
 
         {/* DASHBOARD */}
