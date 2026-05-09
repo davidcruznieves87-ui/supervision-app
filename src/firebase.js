@@ -1,5 +1,13 @@
+
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+
+import {
+  getFirestore,
+} from "firebase/firestore";
+
+import {
+  getAuth,
+} from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDRj4kACyan03xcMLxjn6pKFwKHXO5kVUM",
@@ -8,7 +16,11 @@ const firebaseConfig = {
   storageBucket: "supervisionapp-209e4.firebasestorage.app",
   messagingSenderId: "256289638024",
   appId: "1:256289638024:web:ab179e17d018113cb3413d"
+
 };
 
 const app = initializeApp(firebaseConfig);
+
 export const db = getFirestore(app);
+
+export const auth = getAuth(app);

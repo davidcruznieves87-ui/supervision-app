@@ -1,34 +1,43 @@
-
 import { useEffect, useRef, useState } from "react";
 import {
   collection,
   addDoc,
   getDocs,
+deleteDoc,
+doc,
 } from "firebase/firestore";
-
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-
-import { db } from "./firebase";
+import {
+  signOut,
+} from "firebase/auth"; 
+import { db, auth } from "./firebase";
+import ExecutiveDashboard from "./ExecutiveDashboard";
 import Dashboard from "./Dashboard";
 import Historial from "./Historial";
-
 import logo from "./logo.png";
-
+import {
+  onAuthStateChanged,
+} from "firebase/auth";
 function App() {
 
   const [sitio, setSitio] = useState("");
   const [tecnico, setTecnico] = useState("");
-const fecha = new Date();
+  const [supervisor, setSupervisor] = useState("");
+  const [esSuperSupervisor, setEsSuperSupervisor] = useState(false);
+  const [esAdmin, setEsAdmin] = useState(false);  
+  const fecha = new Date();
 
-const fechaHora = fecha.toLocaleString();
+  const fechaHora = fecha.toLocaleString();
 
-const año = fecha.getFullYear();
+  const año = fecha.getFullYear();
 
-const consecutivo = Date.now().toString().slice(-6);
+  const consecutivo = Date.now().toString().slice(-6);
 
-const folio = `SUP-${año}-${consecutivo}`;
+  const folio = `SUP-${año}-${consecutivo}`;
+
   const [falla, setFalla] = useState("");
+  const [vlt, setVlt] = useState("");
   const [urgencia, setUrgencia] = useState("Baja");
 
   const [imagen, setImagen] = useState(null);
@@ -47,20 +56,34 @@ const folio = `SUP-${año}-${consecutivo}`;
   // 🔥 SOLO MES ACTUAL
   const supervisionesMesActual = supervisiones.filter((s) => {
 
-    if (!s.fechaHora) return false;
+  if (!s.fechaHora) return false;
 
-    const hoy = new Date();
+  const hoy = new Date();
 
-    const texto = s.fechaHora.toLowerCase();
+  const texto = s.fechaHora.toLowerCase();
 
-    const mesActual = hoy.getMonth() + 1;
-    const añoActual = hoy.getFullYear();
+  const mesActual = hoy.getMonth() + 1;
+  const añoActual = hoy.getFullYear();
+
+  // 🔥 ADMIN VE TODO
+  if (esAdmin) {
 
     return (
       texto.includes(`/${mesActual}/`) &&
       texto.includes(añoActual.toString())
     );
-  });
+  }
+
+  // 🔥 SUPERVISOR SOLO VE LO SUYO
+  const mismoSupervisor =
+    s.supervisor === supervisor;
+
+  return (
+    texto.includes(`/${mesActual}/`) &&
+    texto.includes(añoActual.toString()) &&
+    mismoSupervisor
+  );
+});
 
   // 🔥 CARGAR + RECUPERAR BORRADOR
   useEffect(() => {
@@ -138,16 +161,10 @@ const folio = `SUP-${año}-${consecutivo}`;
 
             for (const supervision of pendientes) {
 
-             await addDoc(
-  collection(db, "supervisiones"),
-  {
-    folio,
-    sitio,
-    tecnico,
-    fechaHora,
-    fallas,
-  }
-)
+              await addDoc(
+                collection(db, "supervisiones"),
+                supervision
+              );
             }
 
             localStorage.removeItem("supervisiones_pendientes");
@@ -178,32 +195,124 @@ const folio = `SUP-${año}-${consecutivo}`;
     };
 
   }, []);
+// 🔥 OBTENER SUPERVISOR LOGUEADO
+// 🔥 SUPERVISOR LOGUEADO
+// 🔥 SUPERVISOR LOGUEADO
+useEffect(() => {
+
+  const unsubscribe =
+    onAuthStateChanged(auth, (user) => {
+
+      if (user) {
+
+        setSupervisor(user.email);
+
+        // 🔥 ADMIN
+        if (
+          user.email === "admin@casino.com"
+        ) {
+
+          setEsAdmin(true);
+
+        } else {
+
+          setEsAdmin(false);
+        }
+
+        // 🔥 SUPER SUPERVISORES
+        const superUsuarios = [
+
+          "gerencia@casino.com",
+
+          "acruz@fbmgaming.com.mx",
+
+          "vgarciapina@fbmgaming.com.mx",
+        ];
+
+        if (
+          superUsuarios.includes(user.email)
+        ) {
+
+          setEsSuperSupervisor(true);
+
+        } else {
+
+          setEsSuperSupervisor(false);
+        }
+
+      }
+    });
+
+  return () => unsubscribe();
+
+}, []);
 
   const cargarSupervisiones = async () => {
 
-    try {
+  try {
 
-      const querySnapshot = await getDocs(
-        collection(db, "supervisiones")
-      );
+    const querySnapshot = await getDocs(
+      collection(db, "supervisiones")
+    );
 
-      const datos = [];
+    const datos = [];
 
-      querySnapshot.forEach((doc) => {
-        datos.push(doc.data());
+    querySnapshot.forEach((d) => {
+
+      datos.push({
+        id: d.id,
+        ...d.data(),
       });
 
-      setSupervisiones(datos);
+    });
 
-    } catch (error) {
-      console.log(error);
-    }
-  };
+    setSupervisiones(datos);
 
+  } catch (error) {
+
+    console.log(error);
+
+  }
+};
+
+  // 🔥 ELIMINAR SUPERVISIÓN
+const eliminarSupervision = async (id) => {
+
+  const confirmar = window.confirm(
+    "¿Deseas eliminar esta supervisión?"
+  );
+
+  if (!confirmar) return;
+
+  try {
+
+    await deleteDoc(
+      doc(db, "supervisiones", id)
+    );
+
+    setMensaje("🗑️ Supervisión eliminada");
+
+    cargarSupervisiones();
+
+    setTimeout(() => {
+      setMensaje("");
+    }, 3000);
+
+  } catch (error) {
+
+    console.log(error);
+
+    setMensaje("❌ Error al eliminar");
+  }
+};
   // 🔥 RECUPERAR SUPERVISION
   const recuperarSupervision = (supervision) => {
 
     const fallasRecuperadas = (supervision.fallas || []).map((f) => ({
+
+      vlt:
+        f.vlt ||
+        "",
 
       descripcion:
         f.descripcion ||
@@ -228,6 +337,7 @@ const folio = `SUP-${año}-${consecutivo}`;
     setFallas(fallasRecuperadas);
 
     setFalla("");
+    setVlt("");
     setUrgencia("Baja");
     setImagen(null);
 
@@ -302,6 +412,7 @@ const folio = `SUP-${año}-${consecutivo}`;
     }
 
     const nuevaFalla = {
+      vlt,
       descripcion: falla,
       urgencia,
       imagen: imagenComprimida,
@@ -310,6 +421,7 @@ const folio = `SUP-${año}-${consecutivo}`;
     setFallas([...fallas, nuevaFalla]);
 
     setFalla("");
+    setVlt("");
     setUrgencia("Baja");
     setImagen(null);
   };
@@ -324,12 +436,14 @@ const folio = `SUP-${año}-${consecutivo}`;
       return;
     }
 
-    const supervision = {
-      sitio,
-      tecnico,
-      fechaHora: new Date().toLocaleString(),
-      fallas,
-    };
+   const supervision = {
+  folio,
+  supervisor,
+  sitio,
+  tecnico,
+  fechaHora: new Date().toLocaleString(),
+  fallas,
+};
 
     try {
 
@@ -384,214 +498,205 @@ const folio = `SUP-${año}-${consecutivo}`;
   };
 
   // 🔥 PDF
+  const descargarPDF = () => {
 
-const descargarPDF = () => {
+    const doc = new jsPDF();
 
-  const fecha = new Date();
+    // 🔥 HEADER
+    doc.setFillColor(6, 182, 212);
+    doc.rect(0, 0, 220, 40, "F");
 
-  const año = fecha.getFullYear();
+    doc.addImage(logo, "PNG", 15, 5, 28, 28);
 
-  const consecutivo = Date.now().toString().slice(-6);
-
-  const folio = `SUP-${año}-${consecutivo}`;
-
-  const doc = new jsPDF();
-
-  // 🔥 HEADER
-  doc.setFillColor(6, 182, 212);
-  doc.rect(0, 0, 220, 40, "F");
-
-  doc.addImage(logo, "PNG", 15, 5, 28, 28);
-
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(24);
-  doc.setFont("helvetica", "bold");
-
-  doc.text(
-    "Supervision de Salas Tijuana",
-    105,
-    18,
-    null,
-    null,
-    "center"
-  );
-
-  doc.setFontSize(12);
-
-  doc.text(
-    "Supervisor David Cruz Nieves",
-    105,
-    28,
-    null,
-    null,
-    "center"
-  );
-
-  // 🔥 INFORMACIÓN GENERAL
-  doc.setTextColor(0, 0, 0);
-
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-
-  doc.text("Información", 14, 55);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(12);
-
-  doc.text(`Folio: ${folio}`, 14, 65);
-
-  doc.text(`Sitio: ${sitio}`, 14, 73);
-
-  doc.text(`Técnico: ${tecnico}`, 14, 81);
-
-  doc.text(
-    `Fecha: ${new Date().toLocaleString()}`,
-    14,
-    89
-  );
-
-  // 🔥 RESUMEN EJECUTIVO
-  const totalFallas = fallas.length;
-
-  const criticas = fallas.filter(
-    (f) => f.urgencia === "Crítica"
-  ).length;
-
-  const altas = fallas.filter(
-    (f) => f.urgencia === "Alta"
-  ).length;
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-
-  doc.text("Resumen de Fallas", 14, 105);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(12);
-
-  doc.text(
-    `Total de fallas detectadas: ${totalFallas}`,
-    14,
-    115
-  );
-
-  doc.text(
-    `Fallas críticas: ${criticas}`,
-    14,
-    123
-  );
-
-  doc.text(
-    `Fallas altas: ${altas}`,
-    14,
-    131
-  );
-
-  let conclusion = "Operación estable.";
-
-  if (criticas >= 1) {
-    conclusion =
-      "Se detectaron fallas críticas que requieren atención inmediata.";
-  } else if (altas >= 2) {
-    conclusion =
-      "Se detectaron incidencias de prioridad alta.";
-  }
-
-  doc.setFont("helvetica", "bold");
-
-  doc.text("Conclusión:", 14, 145);
-
-  doc.setFont("helvetica", "normal");
-
-  doc.text(conclusion, 14, 153);
-
-  // 🔥 TABLA
-  const body = fallas.map((f, index) => [
-    index + 1,
-    f.descripcion,
-    f.urgencia,
-  ]);
-
-  autoTable(doc, {
-    startY: 165,
-
-    head: [["#", "Falla Detectada", "Urgencia"]],
-
-    body,
-
-    styles: {
-      fontSize: 11,
-      cellPadding: 4,
-    },
-
-    headStyles: {
-      fillColor: [6, 182, 212],
-      textColor: [255, 255, 255],
-      fontStyle: "bold",
-    },
-  });
-
-  // 🔥 IMÁGENES
-  let y = doc.lastAutoTable.finalY + 15;
-
-  fallas.forEach((f, index) => {
-
-    if (f.imagen) {
-
-      if (y > 220) {
-        doc.addPage();
-        y = 20;
-      }
-
-      doc.setFont("helvetica", "bold");
-
-      doc.text(
-        `Evidencia Fotográfica ${index + 1}`,
-        14,
-        y
-      );
-
-      doc.addImage(
-        f.imagen,
-        "JPEG",
-        14,
-        y + 5,
-        90,
-        70
-      );
-
-      y += 85;
-    }
-  });
-
-  // 🔥 FIRMA
-  if (y > 240) {
-    doc.addPage();
-    y = 40;
-  }
-
-  doc.line(20, y + 25, 90, y + 25);
-
-  doc.text("Supervisor Responsable", 30, y + 35);
-
-  // 🔥 FOOTER
-  const totalPages = doc.internal.getNumberOfPages();
-
-  for (let i = 1; i <= totalPages; i++) {
-
-    doc.setPage(i);
-
-    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
 
     doc.text(
-      `Página ${i} de ${totalPages}`,
-      170,
-      290
+      "Supervision de Salas Tijuana",
+      105,
+      18,
+      null,
+      null,
+      "center"
     );
-  }
 
-  doc.save(`${folio}.pdf`);
-};
+    doc.setFontSize(12);
+
+    doc.text(
+      "Supervisor David Cruz Nieves",
+      105,
+      28,
+      null,
+      null,
+      "center"
+    );
+
+    // 🔥 INFORMACIÓN GENERAL
+    doc.setTextColor(0, 0, 0);
+
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+
+    doc.text("Información", 14, 55);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+
+    doc.text(`Folio: ${folio}`, 14, 65);
+
+    doc.text(`Sitio: ${sitio}`, 14, 73);
+
+    doc.text(`Técnico: ${tecnico}`, 14, 81);
+
+    doc.text(
+      `Fecha: ${new Date().toLocaleString()}`,
+      14,
+      89
+    );
+
+    // 🔥 RESUMEN
+    const totalFallas = fallas.length;
+
+    const criticas = fallas.filter(
+      (f) => f.urgencia === "Crítica"
+    ).length;
+
+    const altas = fallas.filter(
+      (f) => f.urgencia === "Alta"
+    ).length;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+
+    doc.text("Resumen de Fallas", 14, 105);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+
+    doc.text(
+      `Total de fallas detectadas: ${totalFallas}`,
+      14,
+      115
+    );
+
+    doc.text(
+      `Fallas críticas: ${criticas}`,
+      14,
+      123
+    );
+
+    doc.text(
+      `Fallas altas: ${altas}`,
+      14,
+      131
+    );
+
+    let conclusion = "Operación estable.";
+
+    if (criticas >= 1) {
+      conclusion =
+        "Se detectaron fallas críticas que requieren atención inmediata.";
+    } else if (altas >= 2) {
+      conclusion =
+        "Se detectaron incidencias de prioridad alta.";
+    }
+
+    doc.setFont("helvetica", "bold");
+
+    doc.text("Conclusión:", 14, 145);
+
+    doc.setFont("helvetica", "normal");
+
+    doc.text(conclusion, 14, 153);
+
+    // 🔥 TABLA
+    const body = fallas.map((f, index) => [
+      index + 1,
+      `VLT: ${f.vlt || "N/A"} - ${f.descripcion}`,
+      f.urgencia,
+    ]);
+
+    autoTable(doc, {
+      startY: 165,
+
+      head: [["#", "Falla Detectada", "Urgencia"]],
+
+      body,
+
+      styles: {
+        fontSize: 11,
+        cellPadding: 4,
+      },
+
+      headStyles: {
+        fillColor: [6, 182, 212],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+      },
+    });
+
+    // 🔥 IMÁGENES
+    let y = doc.lastAutoTable.finalY + 15;
+
+    fallas.forEach((f, index) => {
+
+      if (f.imagen) {
+
+        if (y > 220) {
+          doc.addPage();
+          y = 20;
+        }
+
+        doc.setFont("helvetica", "bold");
+
+        doc.text(
+          `Evidencia Fotográfica ${index + 1}`,
+          14,
+          y
+        );
+
+        doc.addImage(
+          f.imagen,
+          "JPEG",
+          14,
+          y + 5,
+          90,
+          70
+        );
+
+        y += 85;
+      }
+    });
+
+    // 🔥 FIRMA
+    if (y > 240) {
+      doc.addPage();
+      y = 40;
+    }
+
+    doc.line(20, y + 25, 90, y + 25);
+
+    doc.text("Supervisor Responsable", 30, y + 35);
+
+    // 🔥 FOOTER
+    const totalPages = doc.internal.getNumberOfPages();
+
+    for (let i = 1; i <= totalPages; i++) {
+
+      doc.setPage(i);
+
+      doc.setFontSize(10);
+
+      doc.text(
+        `Página ${i} de ${totalPages}`,
+        170,
+        290
+      );
+    }
+
+    doc.save(`${folio}.pdf`);
+  };
 
   return (
 
@@ -622,25 +727,42 @@ const descargarPDF = () => {
           />
 
         </div>
+<div className="flex justify-end mb-4">
 
+ <button
+  onClick={() => signOut(auth)}
+  className="bg-red-500 hover:bg-red-400 text-white px-5 py-3 rounded-2xl font-black shadow-lg"
+>
+  🚪 Cerrar sesión
+</button>
+
+</div>
         {/* TITULO */}
         <h1 className="text-4xl md:text-6xl font-black text-center mb-3 text-slate-800 leading-tight">
           Sistema de Supervisión
         </h1>
 
         {/* SUBTITULO */}
-        <p className="text-center text-gray-600 text-lg md:text-2xl mb-8 tracking-wide">
-          Equipo Técnico Tijuana
-        </p>
+     <p className="text-center text-gray-600 text-lg md:text-2xl mb-8 tracking-wide">
+
+         Equipo Técnico de
+
+        <span className="font-black text-cyan-700 ml-2">
+         {supervisor.split("@")[0]}
+          </span>
+
+</p>
 
         {/* MENSAJE */}
-        {mensaje && (
+{mensaje && !esSuperSupervisor && (
 
-          <div className="bg-cyan-100 border border-cyan-400 text-cyan-800 p-4 rounded-2xl text-center mb-6 font-bold text-lg">
-            {mensaje}
-          </div>
-        )}
+  <div className="bg-cyan-100 border border-cyan-400 text-cyan-800 p-4 rounded-2xl text-center mb-6 font-bold text-lg">
+    {mensaje}
+  </div>
 
+)}
+{!esSuperSupervisor && (
+  <>
         {/* FORMULARIO */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
 
@@ -671,6 +793,14 @@ const descargarPDF = () => {
 
         {/* FALLAS */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-5 mb-6">
+
+          <input
+            type="text"
+            placeholder="🎰 VLT"
+            value={vlt}
+            onChange={(e) => setVlt(e.target.value)}
+            className="bg-white border border-gray-300 text-gray-800 placeholder-gray-400 rounded-2xl p-5 text-xl outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/40"
+          />
 
           <input
             type="text"
@@ -723,6 +853,10 @@ const descargarPDF = () => {
               <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-5">
 
                 <div>
+
+                  <p className="font-black text-cyan-700 text-xl mb-2">
+                    🎰 VLT: {f.vlt || "N/A"}
+                  </p>
 
                   <p className="font-black text-slate-800 text-2xl">
                     {f.descripcion}
@@ -804,13 +938,42 @@ const descargarPDF = () => {
         </div>
 
         {/* DASHBOARD */}
-        <Dashboard supervisiones={supervisionesMesActual} />
+        </>
+        )}
+        {/* 👑 SUPER SUPERVISOR */}
+
+{esSuperSupervisor ? (
+
+  <ExecutiveDashboard
+    supervisiones={supervisiones}
+  />
+
+) : (
+
+  <>
+
+    {/* DASHBOARD */}
+    <Dashboard
+      supervisiones={supervisionesMesActual}
+    />
+
+    {/* HISTORIAL */}
+    <Historial
+      supervisiones={supervisionesMesActual}
+      recuperarSupervision={recuperarSupervision}
+      eliminarSupervision={eliminarSupervision}
+    />
+
+  </>
+
+)}
 
         {/* HISTORIAL */}
-        <Historial
-          supervisiones={supervisionesMesActual}
-          recuperarSupervision={recuperarSupervision}
-        />
+      <Historial
+  supervisiones={supervisionesMesActual}
+  recuperarSupervision={recuperarSupervision}
+  eliminarSupervision={eliminarSupervision}
+/>
 
       </div>
 
