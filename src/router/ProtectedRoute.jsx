@@ -2,9 +2,7 @@ import {
   Navigate,
 } from "react-router-dom";
 
-import {
-  auth,
-} from "../firebase";
+import useAuth from "../hooks/useAuth";
 
 export default function ProtectedRoute({
 
@@ -12,43 +10,55 @@ export default function ProtectedRoute({
 
   requireAdmin = false,
 
+  requireSuperAdmin = false,
+
 }) {
 
-  const user =
-    auth.currentUser;
+  const {
 
-  // 🔥 ESPERAR LOGIN
-  if (!user) {
+    supervisor,
+
+    esAdmin,
+
+    esSuperAdmin,
+
+    loading,
+
+  } = useAuth();
+
+  // 🔥 CARGANDO
+  if (loading) {
 
     return (
-      <div>
-        Cargando...
+
+      <div className="flex items-center justify-center min-h-screen text-3xl font-black text-cyan-700">
+
+        🔄 Cargando...
+
       </div>
+
     );
   }
 
-  // 🔥 SUPER USUARIOS
-  const superUsuarios = [
+  // 🔥 NO LOGUEADO
+  if (!supervisor) {
 
-    "gerencia@casino.com",
+    return <Navigate to="/" />;
+  }
 
-    "acruz@fbmgaming.com.mx",
-
-    "vgarciapina@fbmgaming.com.mx",
-
-    // TU CORREO
-    user.email,
-  ];
-
-  const autorizado =
-    superUsuarios.includes(
-      user.email
-    );
-
-  // 🔥 BLOQUEAR
+  // 🔥 SOLO ADMIN
   if (
     requireAdmin &&
-    !autorizado
+    !esAdmin
+  ) {
+
+    return <Navigate to="/" />;
+  }
+
+  // 🔥 SOLO SUPERADMIN
+  if (
+    requireSuperAdmin &&
+    !esSuperAdmin
   ) {
 
     return <Navigate to="/" />;

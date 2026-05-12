@@ -2,163 +2,218 @@ import {
   BrowserRouter,
   Routes,
   Route,
+  Navigate,
 } from "react-router-dom";
 
-import {
-  useEffect,
-  useState,
-} from "react";
-
-import ProtectedRoute from "./ProtectedRoute";
-
+// 🔥 LAYOUT
 import MainLayout from "../layouts/MainLayout";
 
+// 🔥 PAGINAS
 import DashboardPage from "../pages/DashboardPage";
 
 import SupervisionesPage from "../pages/SupervisionesPage";
-
-import ExecutivePage from "../pages/ExecutivePage";
 
 import HistorialPage from "../pages/HistorialPage";
 
 import AdminPage from "../pages/AdminPage";
 
-import useAuth from "../hooks/useAuth";
+import MantenimientoPage from "../pages/MantenimientoPage";
 
-import {
-  obtenerTecnicos,
-} from "../services/tecnicosService";
+import MantenimientoDashboard from "../pages/MantenimientoDashboard";
 
-import {
-  obtenerSitios,
-} from "../services/sitiosService";
+function AppRouter({
 
-export default function AppRouter() {
+  usuario,
+}) {
 
-  const {
-    supervisor,
-  } = useAuth();
+  // 🔥 NORMALIZAR ROL
+  const rol = (
+    usuario?.rol || ""
+  )
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(
+      /[\u0300-\u036f]/g,
+      ""
+    );
 
-  const [
-    tecnicos,
-    setTecnicos,
-  ] = useState([]);
+  console.log(
+    "USUARIO APP ROUTER:",
+    usuario
+  );
 
-  const [
-    sitios,
-    setSitios,
-  ] = useState([]);
-
-  // 🔥 CARGAR TECNICOS
-  const cargarTecnicos =
-    async () => {
-
-      if (!supervisor) return;
-
-      const datos =
-        await obtenerTecnicos(
-          supervisor
-        );
-
-      setTecnicos(datos);
-    };
-
-  // 🔥 CARGAR SITIOS
-  const cargarSitios =
-    async () => {
-
-      if (!supervisor) return;
-
-      const datos =
-        await obtenerSitios(
-          supervisor
-        );
-
-      setSitios(datos);
-    };
-
-  // 🔥 INICIALIZAR
-  useEffect(() => {
-
-    cargarTecnicos();
-
-    cargarSitios();
-
-  }, [supervisor]);
+  console.log(
+    "ROL APP ROUTER:",
+    rol
+  );
 
   return (
 
     <BrowserRouter>
 
-      <Routes>
+      <MainLayout
+        usuario={usuario}
+      >
 
-        <Route
-          path="/"
-          element={<MainLayout />}
-        >
+        <Routes>
 
-          <Route
-            index
-            element={<DashboardPage />}
-          />
+          {/* 🔥 SUPERADMIN */}
+          {
+            rol ===
+              "superadmin"
 
-          <Route
-            path="supervisiones"
-            element={
-              <SupervisionesPage />
-            }
-          />
+            &&
 
-          <Route
-            path="historial"
-            element={
-              <HistorialPage />
-            }
-          />
+            <>
+              <Route
+                path="/"
+                element={
+                  <DashboardPage />
+                }
+              />
 
-          <Route
-            path="ejecutivo"
-            element={
-              <ExecutivePage />
-            }
-          />
+              <Route
+                path="/supervisiones"
+                element={
+                  <SupervisionesPage />
+                }
+              />
+
+              <Route
+  path="/historial"
+  element={
+    <HistorialPage
+      usuario={usuario}
+    />
+  }
+/>
+
+              <Route
+                path="/mantenimiento"
+                element={
+                  <MantenimientoPage />
+                }
+              />
+
+              <Route
+                path="/dashboard-mantenimiento"
+                element={
+                  <MantenimientoDashboard />
+                }
+              />
+
+              <Route
+                path="/admin"
+                element={
+                  <AdminPage />
+                }
+              />
+            </>
+          }
+
+          {/* 🔥 SUPERVISOR */}
+          {
+            rol ===
+              "supervisor"
+
+            &&
+
+            <>
+              <Route
+                path="/"
+                element={
+                  <DashboardPage />
+                }
+              />
+
+              <Route
+                path="/supervisiones"
+                element={
+                  <SupervisionesPage />
+                }
+              />
+
+              <Route
+                path="/mantenimiento"
+                element={
+                  <MantenimientoPage />
+                }
+              />
+
+              <Route
+  path="/historial"
+  element={
+    <HistorialPage
+      usuario={usuario}
+    />
+  }
+/>
+
+              <Route
+                path="/dashboard-mantenimiento"
+                element={
+                  <MantenimientoDashboard />
+                }
+              />
+            </>
+          }
 
           {/* 🔥 ADMIN */}
-          <Route
-            path="admin"
-            element={
+          {
+            rol ===
+              "admin"
 
-              <ProtectedRoute
-                requireAdmin={
-                  true
+            &&
+
+            <>
+              <Route
+                path="/admin"
+                element={
+                  <AdminPage />
                 }
-              >
+              />
+            </>
+          }
 
-                <AdminPage
-                  supervisor={
-                    supervisor
-                  }
-                  tecnicos={
-                    tecnicos
-                  }
-                  sitios={sitios}
-                  cargarTecnicos={
-                    cargarTecnicos
-                  }
-                  cargarSitios={
-                    cargarSitios
-                  }
-                />
+          {/* 🔥 TECNICO */}
+          {
+            rol ===
+              "tecnico"
 
-              </ProtectedRoute>
+            &&
 
-            }
-          />
+            <>
+              <Route
+                path="/mantenimiento"
+                element={
+                  <MantenimientoPage />
+                }
+              />
 
-        </Route>
+              <Route
+                path="/dashboard-mantenimiento"
+                element={
+                  <MantenimientoDashboard />
+                }
+              />
 
-      </Routes>
+              <Route
+                path="*"
+                element={
+                  <Navigate
+                    to="/mantenimiento"
+                  />
+                }
+              />
+            </>
+          }
+
+        </Routes>
+
+      </MainLayout>
 
     </BrowserRouter>
   );
 }
+
+export default AppRouter;

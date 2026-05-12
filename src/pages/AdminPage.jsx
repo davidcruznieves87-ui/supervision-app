@@ -6,6 +6,8 @@ import GestionTecnicos from "../components/GestionTecnicos";
 
 import GestionSitios from "../components/GestionSitios";
 
+import GestionUsuarios from "../components/GestionUsuarios";
+
 export default function AdminPage({
   supervisor,
   tecnicos,
@@ -13,12 +15,16 @@ export default function AdminPage({
   cargarTecnicos,
   cargarSitios,
 }) {
+
   const [seccion, setSeccion] =
     useState("tecnicos");
 
   return (
+
     <div style={theme.layout.page}>
+
       <div style={theme.layout.content}>
+
         {/* HEADER */}
         <div
           style={{
@@ -27,15 +33,20 @@ export default function AdminPage({
           }}
           className="border border-gray-200"
         >
+
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+
             <div>
+
               <h1
                 style={{
                   ...theme.title,
                   marginBottom: "10px",
                 }}
               >
+
                 ⚙️ Panel Administrativo
+
               </h1>
 
               <p
@@ -46,40 +57,59 @@ export default function AdminPage({
                 }}
                 className="text-lg"
               >
-                Gestión operativa del
-                sistema de supervisión
+
+                Gestión operativa del sistema
+
               </p>
+
             </div>
 
             {/* STATS */}
             <div className="flex flex-wrap gap-4">
+
+              {/* TECNICOS */}
               <div className="bg-cyan-50 border border-cyan-200 rounded-2xl px-6 py-4 min-w-[140px]">
+
                 <p className="text-sm font-bold text-gray-500">
+
                   TÉCNICOS
+
                 </p>
 
                 <p className="text-3xl font-black text-cyan-700">
-                  {tecnicos?.length ||
-                    0}
+
+                  {tecnicos?.length || 0}
+
                 </p>
+
               </div>
 
+              {/* SITIOS */}
               <div className="bg-slate-100 border border-slate-200 rounded-2xl px-6 py-4 min-w-[140px]">
+
                 <p className="text-sm font-bold text-gray-500">
+
                   SITIOS
+
                 </p>
 
                 <p className="text-3xl font-black text-slate-700">
-                  {sitios?.length ||
-                    0}
+
+                  {sitios?.length || 0}
+
                 </p>
+
               </div>
+
             </div>
+
           </div>
+
         </div>
 
         {/* MENU */}
         <div className="flex flex-wrap gap-4 mb-8">
+
           {/* TECNICOS */}
           <button
             onClick={() =>
@@ -90,20 +120,18 @@ export default function AdminPage({
             style={
               seccion ===
               "tecnicos"
-                ? theme.button
-                    .primary
+                ? theme.button.primary
                 : {
-                    ...theme.button
-                      .primary,
-                    background:
-                      "#e5e7eb",
-                    color:
-                      "#111827",
+                    ...theme.button.primary,
+                    background: "#e5e7eb",
+                    color: "#111827",
                   }
             }
             className="hover:scale-105 transition-all duration-300 shadow-lg"
           >
+
             👨‍🔧 Técnicos
+
           </button>
 
           {/* SITIOS */}
@@ -116,28 +144,53 @@ export default function AdminPage({
             style={
               seccion ===
               "sitios"
-                ? theme.button
-                    .primary
+                ? theme.button.primary
                 : {
-                    ...theme.button
-                      .primary,
-                    background:
-                      "#e5e7eb",
-                    color:
-                      "#111827",
+                    ...theme.button.primary,
+                    background: "#e5e7eb",
+                    color: "#111827",
                   }
             }
             className="hover:scale-105 transition-all duration-300 shadow-lg"
           >
+
             📍 Sitios
+
           </button>
+
+          {/* USUARIOS */}
+          <button
+            onClick={() =>
+              setSeccion(
+                "usuarios"
+              )
+            }
+            style={
+              seccion ===
+              "usuarios"
+                ? theme.button.primary
+                : {
+                    ...theme.button.primary,
+                    background: "#e5e7eb",
+                    color: "#111827",
+                  }
+            }
+            className="hover:scale-105 transition-all duration-300 shadow-lg"
+          >
+
+            👨‍💼 Usuarios
+
+          </button>
+
         </div>
 
         {/* CONTENIDO */}
         <div>
+
           {/* TECNICOS */}
           {seccion ===
             "tecnicos" && (
+
             <GestionTecnicos
               supervisor={
                 supervisor
@@ -149,11 +202,13 @@ export default function AdminPage({
                 cargarTecnicos
               }
             />
+
           )}
 
           {/* SITIOS */}
           {seccion ===
             "sitios" && (
+
             <GestionSitios
               supervisor={
                 supervisor
@@ -168,9 +223,21 @@ export default function AdminPage({
                 cargarSitios
               }
             />
+
           )}
+
+          {/* USUARIOS */}
+          {seccion ===
+            "usuarios" && (
+
+            <GestionUsuarios />
+
+          )}
+
         </div>
+
       </div>
+
     </div>
   );
 }

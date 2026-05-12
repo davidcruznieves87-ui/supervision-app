@@ -1,17 +1,30 @@
-import {  SupervisionProvider,} from "./context/SupervisionContext";
+import {
+  SupervisionProvider,
+} from "./context/SupervisionContext";
+
 import React from "react";
+
 import ReactDOM from "react-dom/client";
 
 import "./index.css";
 
 import App from "./App";
+
 import Login from "./Login";
 
-import { auth } from "./firebase";
+import {
+  auth,
+  db,
+} from "./firebase";
 
 import {
   onAuthStateChanged,
 } from "firebase/auth";
+
+import {
+  doc,
+  getDoc,
+} from "firebase/firestore";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root")
@@ -19,40 +32,125 @@ const root = ReactDOM.createRoot(
 
 function Root() {
 
-  const [user, setUser] = React.useState(undefined);
+  const [usuario, setUsuario] =
+    React.useState(undefined);
 
   React.useEffect(() => {
 
     const unsubscribe =
-      onAuthStateChanged(auth, (u) => {
 
-        setUser(u);
-      });
+      onAuthStateChanged(
 
-    return () => unsubscribe();
+        auth,
+
+        async (userAuth) => {
+
+          console.log(
+            "AUTH USER:",
+            userAuth
+          );
+
+          if (!userAuth) {
+
+            setUsuario(null);
+
+            return;
+          }
+
+          try {
+
+            console.log(
+              "UID AUTH:",
+              userAuth.uid
+            );
+
+            const ref = doc(
+              db,
+              "usuarios",
+              userAuth.uid
+            );
+
+            const snap =
+              await getDoc(ref);
+
+            console.log(
+              "DOC EXISTS:",
+              snap.exists()
+            );
+
+            console.log(
+              "DOC DATA:",
+              snap.data()
+            );
+
+            if (snap.exists()) {
+
+              setUsuario({
+
+                uid:
+                  userAuth.uid,
+
+                ...snap.data(),
+              });
+
+            } else {
+
+              setUsuario({
+                uid:
+                  userAuth.uid,
+              });
+            }
+
+          } catch (error) {
+
+            console.log(
+              "ERROR FIRESTORE:",
+              error
+            );
+
+            setUsuario(null);
+          }
+        }
+      );
+
+    return () =>
+      unsubscribe();
 
   }, []);
 
-  // 🔥 CARGANDO
-  if (user === undefined) {
+  if (
+    usuario === undefined
+  ) {
 
     return (
-      <div className="min-h-screen flex items-center justify-center text-3xl font-black">
+      <div>
         Cargando...
       </div>
     );
   }
 
-  return user ? <SupervisionProvider>
+  return usuario ? (
 
-  <App />
+    <SupervisionProvider>
 
-</SupervisionProvider> : <Login />;
+      <App
+        usuario={usuario}
+      />
+
+    </SupervisionProvider>
+
+  ) : (
+
+    <Login />
+
+  );
 }
 
 root.render(
 
   <React.StrictMode>
+
     <Root />
+
   </React.StrictMode>
 );

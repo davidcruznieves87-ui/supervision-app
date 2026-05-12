@@ -8,7 +8,15 @@ import {
 } from "firebase/auth";
 
 import {
+  collection,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
+
+import {
   auth,
+  db,
 } from "../firebase";
 
 export default function useAuth() {
@@ -19,21 +27,31 @@ export default function useAuth() {
   ] = useState("");
 
   const [
+    rol,
+    setRol,
+  ] = useState("");
+
+  const [
     esAdmin,
     setEsAdmin,
   ] = useState(false);
 
   const [
-    esSuperSupervisor,
-    setEsSuperSupervisor,
+    esSuperAdmin,
+    setEsSuperAdmin,
   ] = useState(false);
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
 
   useEffect(() => {
 
     const unsubscribe =
       onAuthStateChanged(
         auth,
-        (user) => {
+        async (user) => {
 
           if (user) {
 
@@ -41,49 +59,81 @@ export default function useAuth() {
               user.email
             );
 
-            // 🔥 ADMIN
-            if (
-              user.email ===
-              "admin@casino.com"
-            ) {
+            try {
 
-              setEsAdmin(true);
-
-            } else {
-
-              setEsAdmin(false);
-            }
-
-            // 🔥 SUPER SUPERVISORES
-          const superUsuarios = [
-
-  "gerencia@casino.com",
-
-  "acruz@fbmgaming.com.mx",
-
-  "vgarciapina@fbmgaming.com.mx",
-
-  "david.cruz@fbmgaming.com.mx",
-
-];
-
-            if (
-              superUsuarios.includes(
-                user.email
-              )
-            ) {
-
-              setEsSuperSupervisor(
-                true
+              // 🔥 BUSCAR USUARIO
+              const q = query(
+                collection(
+                  db,
+                  "usuarios"
+                ),
+                where(
+                  "correo",
+                  "==",
+                  user.email
+                )
               );
 
-            } else {
+              const snapshot =
+                await getDocs(q);
 
-              setEsSuperSupervisor(
-                false
-              );
+              if (
+                !snapshot.empty
+              ) {
+
+                const datos =
+                  snapshot.docs[0].data();
+
+                setRol(
+                  datos.rol
+                );
+
+                // 🔥 ADMIN
+                setEsAdmin(
+                  datos.rol ===
+                    "admin" ||
+                  datos.rol ===
+                    "superadmin"
+                );
+
+                // 🔥 SUPERADMIN
+                setEsSuperAdmin(
+                  datos.rol ===
+                    "superadmin"
+                );
+
+              } else {
+
+                setRol(
+                  "supervisor"
+                );
+
+                setEsAdmin(false);
+
+                setEsSuperAdmin(
+                  false
+                );
+              }
+
+            } catch (error) {
+
+              console.log(error);
             }
+
+          } else {
+
+            setSupervisor("");
+
+            setRol("");
+
+            setEsAdmin(false);
+
+            setEsSuperAdmin(
+              false
+            );
           }
+
+          setLoading(false);
         }
       );
 
@@ -95,9 +145,13 @@ export default function useAuth() {
 
     supervisor,
 
+    rol,
+
     esAdmin,
 
-    esSuperSupervisor,
+    esSuperAdmin,
+
+    loading,
 
   };
 }

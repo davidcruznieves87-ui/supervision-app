@@ -1,8 +1,9 @@
 import {
   Link,
-  Outlet,
+  useLocation,
+  useNavigate,
 } from "react-router-dom";
-import theme from "../styles/theme";
+
 import {
   signOut,
 } from "firebase/auth";
@@ -11,14 +12,176 @@ import {
   auth,
 } from "../firebase";
 
-export default function MainLayout() {
+function MainLayout({
 
+  children,
+
+  usuario,
+}) {
+
+  const location =
+    useLocation();
+
+  const navigate =
+    useNavigate();
+
+  // 🔥 NORMALIZAR ROL
+  const rol = (
+    usuario?.rol || ""
+  )
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(
+      /[\u0300-\u036f]/g,
+      ""
+    );
+
+  console.log(
+    "ROL ACTUAL:",
+    rol
+  );
+
+  // 🔥 MENU
+  let menu = [];
+
+  // 🔥 SUPERADMIN
+  if (rol === "superadmin") {
+
+    menu = [
+
+      {
+        nombre:
+          "📊 Dashboard",
+
+        ruta:
+          "/",
+      },
+
+      {
+        nombre:
+          "📝 Supervisiones",
+
+        ruta:
+          "/supervisiones",
+      },
+
+      {
+        nombre:
+          "📁 Historial",
+
+        ruta:
+          "/historial",
+      },
+
+      {
+        nombre:
+          "🔨 Mantenimientos",
+
+        ruta:
+          "/mantenimiento",
+      },
+
+      {
+        nombre:
+          "📈 Dashboard MTTO",
+
+        ruta:
+          "/dashboard-mantenimiento",
+      },
+
+      {
+        nombre:
+          "👨‍💼 Administración",
+
+        ruta:
+          "/admin",
+      },
+    ];
+  }
+
+  // 🔥 SUPERVISOR
+else if (rol === "supervisor") {
+
+  menu = [
+
+    {
+      nombre: "📊 Dashboard",
+      ruta: "/",
+    },
+
+    {
+      nombre: "📝 Supervisiones",
+      ruta: "/supervisiones",
+    },
+
+    {
+      nombre: "📁 Historial",
+      ruta: "/historial",
+    },
+
+    {
+      nombre: "🔨 Mantenimientos",
+      ruta: "/mantenimiento",
+    },
+
+    {
+      nombre: "📈 Dashboard MTTO",
+      ruta: "/dashboard-mantenimiento",
+    },
+  ];
+}
+
+  // 🔥 ADMIN
+  else if (
+    rol === "admin"
+  ) {
+
+    menu = [
+
+      {
+        nombre:
+          "👨‍💼 Administración",
+
+        ruta:
+          "/admin",
+      },
+    ];
+  }
+
+  // 🔥 TECNICO
+  else if (
+    rol === "tecnico"
+  ) {
+
+    menu = [
+
+      {
+        nombre:
+          "🔨 Mantenimiento",
+
+        ruta:
+          "/mantenimiento",
+      },
+
+      {
+        nombre:
+          "📈 Dashboard MTTO",
+
+        ruta:
+          "/dashboard-mantenimiento",
+      },
+    ];
+  }
+
+  // 🔥 LOGOUT
   const cerrarSesion =
     async () => {
 
       try {
 
         await signOut(auth);
+
+        navigate("/login");
 
       } catch (error) {
 
@@ -28,82 +191,228 @@ export default function MainLayout() {
 
   return (
 
-  <div style={{
-    display: "flex",
-    minHeight: "100vh",
-    background: theme.colors.background,
-  }}>
+    <div
+      style={{
 
-    <aside style={theme.sidebar.container}>
-
-      <h2 style={{
-        margin: 0,
-        fontSize: "28px",
-      }}>
-        🎰 Sistema
-      </h2>
-
-      <nav style={{
         display: "flex",
-        flexDirection: "column",
-        gap: "12px",
-      }}>
 
-        <Link
-          to="/"
-          style={theme.sidebar.link}
-        >
-          Dashboard
-        </Link>
+        minHeight: "100vh",
 
-        <Link
-          to="/admin"
-          style={theme.sidebar.link}
-        >
-          Administración
-        </Link>
-        <Link
-  to="/supervisiones"
-  style={theme.sidebar.link}
->
-  Supervisiones
-</Link>
+        background:
+          "#0F172A",
+      }}
+    >
 
-<Link
-  to="/historial"
-  style={theme.sidebar.link}
->
-  Historial
-</Link>
+      {/* 🔥 SIDEBAR */}
+      <aside
+        style={{
 
-<Link
-  to="/ejecutivo"
-  style={theme.sidebar.link}
->
-  Ejecutivo
-</Link>
+          width: "260px",
 
+          background:
+            "#020617",
 
-      </nav>
+          padding: "20px",
 
-      <button
-        onClick={cerrarSesion}
-        style={theme.button.danger}
+          color: "white",
+
+          borderRight:
+            "1px solid #1E293B",
+        }}
       >
-        Cerrar sesión
-      </button>
 
-    </aside>
+        {/* 🔥 TITULO */}
+        <h1
+          style={{
 
-    <main style={{
-      flex: 1,
-      padding: "20px",
-    }}>
+            marginBottom:
+              "40px",
 
-      <Outlet />
+            fontSize:
+              "28px",
 
-    </main>
+            fontWeight:
+              "bold",
+          }}
+        >
 
-  </div>
-);
+          🎰 Sistema
+
+        </h1>
+
+        {/* 🔥 MENU */}
+        <nav
+          style={{
+
+            display: "flex",
+
+            flexDirection:
+              "column",
+
+            gap: "15px",
+          }}
+        >
+
+          {
+            menu.map(
+              (item) => (
+
+                <Link
+                  key={item.ruta}
+
+                  to={item.ruta}
+
+                  style={{
+
+                    textDecoration:
+                      "none",
+
+                    background:
+
+                      location.pathname ===
+                      item.ruta
+
+                        ? "#2563EB"
+
+                        : "#132238",
+
+                    color:
+                      "white",
+
+                    padding:
+                      "18px",
+
+                    borderRadius:
+                      "15px",
+
+                    fontWeight:
+                      "bold",
+                  }}
+                >
+
+                  {
+                    item.nombre
+                  }
+
+                </Link>
+              )
+            )
+          }
+
+        </nav>
+
+        {/* 🔥 USUARIO */}
+        <div
+          style={{
+
+            marginTop:
+              "40px",
+
+            padding:
+              "15px",
+
+            background:
+              "#111827",
+
+            borderRadius:
+              "15px",
+          }}
+        >
+
+          <div
+            style={{
+              fontWeight:
+                "bold",
+            }}
+          >
+
+            {
+              usuario?.nombre ||
+              "Usuario"
+            }
+
+          </div>
+
+          <div
+            style={{
+
+              marginTop:
+                "5px",
+
+              color:
+                "#94A3B8",
+
+              fontSize:
+                "14px",
+            }}
+          >
+
+            Rol:
+            {" "}
+            {rol || "sin rol"}
+
+          </div>
+
+        </div>
+
+        {/* 🔥 LOGOUT */}
+        <button
+          onClick={
+            cerrarSesion
+          }
+
+          style={{
+
+            marginTop:
+              "20px",
+
+            width: "100%",
+
+            background:
+              "#EF4444",
+
+            border:
+              "none",
+
+            color:
+              "white",
+
+            padding:
+              "16px",
+
+            borderRadius:
+              "15px",
+
+            fontWeight:
+              "bold",
+
+            cursor:
+              "pointer",
+          }}
+        >
+
+          Cerrar sesión
+
+        </button>
+
+      </aside>
+
+      {/* 🔥 CONTENIDO */}
+      <main
+        style={{
+
+          flex: 1,
+
+          padding: "20px",
+        }}
+      >
+
+        {children}
+
+      </main>
+
+    </div>
+  );
 }
+
+export default MainLayout;
