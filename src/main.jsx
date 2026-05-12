@@ -1,3 +1,4 @@
+import {  SupervisionProvider,} from "./context/SupervisionContext";
 import React from "react";
 import ReactDOM from "react-dom/client";
 
@@ -42,7 +43,11 @@ function Root() {
     );
   }
 
-  return user ? <App /> : <Login />;
+  return user ? <SupervisionProvider>
+
+  <App />
+
+</SupervisionProvider> : <Login />;
 }
 
 root.render(
