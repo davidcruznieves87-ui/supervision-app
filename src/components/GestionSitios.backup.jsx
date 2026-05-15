@@ -6,6 +6,7 @@ import {
 import {
   collection,
   addDoc,
+  deleteDoc,
   updateDoc,
   doc,
   getDocs,
@@ -54,8 +55,8 @@ function GestionSitios({
       try {
 
         const data =
-          await obtenerTecnicos(
-            supervisor
+         await obtenerTecnicos(
+  supervisor
           );
 
         setTecnicosDB(
@@ -67,6 +68,11 @@ function GestionSitios({
         console.log(error);
 
         setTecnicosDB([]);
+console.log(
+  "TECNICOS DB:",
+  data
+);
+
       }
     };
 
@@ -117,7 +123,7 @@ function GestionSitios({
 
         setLoading(true);
 
-        // 🔥 LEGACY
+        // 🔥 GUARDAR SITIO
         await addDoc(
 
           collection(
@@ -158,7 +164,7 @@ function GestionSitios({
         const snapshot =
           await getDocs(q);
 
-        // 🔥 ACTUALIZAR SITIOS
+        // 🔥 ACTUALIZAR SITIOS ASIGNADOS
         for (const d of snapshot.docs) {
 
           const tecnicoData =
@@ -185,7 +191,7 @@ function GestionSitios({
           );
         }
 
-        // 🔥 REFRESH
+        // 🔥 RECARGAR TECNICOS
         await cargarTecnicos();
 
         setNuevoSitio("");
@@ -227,6 +233,7 @@ function GestionSitios({
 
       try {
 
+        // 🔥 BUSCAR TECNICO
         const q = query(
 
           collection(
@@ -244,6 +251,7 @@ function GestionSitios({
         const snapshot =
           await getDocs(q);
 
+        // 🔥 ACTUALIZAR
         for (const d of snapshot.docs) {
 
           const tecnicoData =
@@ -273,6 +281,7 @@ function GestionSitios({
           );
         }
 
+        // 🔥 REFRESH
         await cargarTecnicos();
 
         mostrarMensaje(
@@ -294,35 +303,24 @@ function GestionSitios({
 
     <div
       style={theme.card}
-      className="
-        border
-        border-slate-200
-        shadow-xl
-        rounded-[32px]
-        overflow-hidden
-      "
+      className="border border-gray-200"
     >
 
       {/* HEADER */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8 p-2">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
 
         <div>
 
           <h2
             style={theme.title}
-            className="
-              flex
-              items-center
-              gap-3
-              text-slate-800
-            "
+            className="flex items-center gap-3"
           >
 
             📍 Gestión de Sitios
 
           </h2>
 
-          <p className="text-slate-500 font-semibold text-lg mt-2">
+          <p className="text-gray-500 font-semibold text-lg">
 
             Sitios asignados por técnico
 
@@ -330,27 +328,15 @@ function GestionSitios({
 
         </div>
 
-        <div
-          className="
-            bg-gradient-to-br
-            from-cyan-50
-            to-cyan-100
-            border
-            border-cyan-200
-            rounded-3xl
-            px-8
-            py-5
-            shadow-sm
-          "
-        >
+        <div className="bg-cyan-50 border border-cyan-200 rounded-2xl px-6 py-4 shadow-sm">
 
-          <p className="text-cyan-700 font-black text-sm tracking-widest">
+          <p className="text-gray-500 font-bold text-sm">
 
             TÉCNICOS
 
           </p>
 
-          <p className="text-5xl font-black text-cyan-800 mt-1">
+          <p className="text-4xl font-black text-cyan-700">
 
             {tecnicosDB.length}
 
@@ -387,42 +373,20 @@ function GestionSitios({
       }
 
       {/* FORM */}
-      <div
-        className="
-          bg-gradient-to-br
-          from-cyan-50
-          to-white
-          border
-          border-cyan-100
-          rounded-[32px]
-          p-8
-          mb-10
-          shadow-sm
-        "
-      >
+      <div className="bg-slate-50 border border-gray-200 rounded-3xl p-6 mb-8">
 
-        <h3
-          className="
-            text-3xl
-            font-black
-            text-slate-800
-            mb-8
-            flex
-            items-center
-            gap-3
-          "
-        >
+        <h3 className="text-2xl font-black text-slate-700 mb-6">
 
           ➕ Agregar Sitio
 
         </h3>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
           {/* TECNICO */}
           <div>
 
-            <label className="font-black text-slate-700 mb-2 block">
+            <label className="font-bold text-gray-600">
 
               Técnico
 
@@ -441,15 +405,7 @@ function GestionSitios({
 
               style={theme.input}
 
-              className="
-                bg-white
-                rounded-2xl
-                border
-                border-slate-200
-                shadow-sm
-                focus:ring-4
-                focus:ring-cyan-100
-              "
+              className="bg-white"
             >
 
               <option value="">
@@ -479,7 +435,7 @@ function GestionSitios({
           {/* SITIO */}
           <div>
 
-            <label className="font-black text-slate-700 mb-2 block">
+            <label className="font-bold text-gray-600">
 
               Nombre del sitio
 
@@ -499,15 +455,6 @@ function GestionSitios({
               }
 
               style={theme.input}
-
-              className="
-                rounded-2xl
-                border
-                border-slate-200
-                shadow-sm
-                focus:ring-4
-                focus:ring-cyan-100
-              "
             />
 
           </div>
@@ -526,20 +473,7 @@ function GestionSitios({
                 theme.button.primary
               }
 
-              className="
-                w-full
-                text-lg
-                font-black
-                rounded-2xl
-                hover:scale-[1.02]
-                transition-all
-                duration-300
-                shadow-xl
-                disabled:opacity-50
-                bg-gradient-to-r
-                from-cyan-600
-                to-blue-600
-              "
+              className="w-full text-lg hover:scale-105 transition-all duration-300 shadow-lg disabled:opacity-50"
             >
 
               {
@@ -559,7 +493,7 @@ function GestionSitios({
       </div>
 
       {/* LISTA */}
-      <div className="space-y-6">
+      <div className="space-y-5">
 
         {
           tecnicosDB.length === 0
@@ -585,107 +519,25 @@ function GestionSitios({
                   <div
                     key={tecnico.id}
 
-                    className="
-                      bg-white
-                      border
-                      border-slate-200
-                      rounded-3xl
-                      p-6
-                      shadow-sm
-                      hover:shadow-xl
-                      transition-all
-                      duration-300
-                    "
+                    className="bg-white border border-gray-200 rounded-3xl p-6 shadow-md"
                   >
 
                     {/* TECNICO */}
-                    <div className="mb-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+                    <div className="mb-5">
 
-                      {/* INFO */}
-                      <div className="flex items-center gap-4">
+                      <h3 className="text-3xl font-black text-cyan-700">
 
-                        {/* AVATAR */}
-                        <div
-                          className="
-                            w-16
-                            h-16
-                            rounded-2xl
-                            bg-cyan-100
-                            flex
-                            items-center
-                            justify-center
-                            text-3xl
-                            shadow-inner
-                          "
-                        >
+                        👨‍🔧 {tecnico.nombre}
 
-                          👨‍🔧
+                      </h3>
 
-                        </div>
+                      <p className="text-gray-500 font-bold mt-2">
 
-                        {/* DATOS */}
-                        <div>
+                        Supervisor:
+                        {" "}
+                        {tecnico.supervisor}
 
-                          <h3 className="text-3xl font-black text-cyan-700">
-
-                            {tecnico.nombre}
-
-                          </h3>
-
-                          <p className="text-gray-500 font-bold mt-2">
-
-                            Supervisor:
-                            {" "}
-                            {tecnico.supervisor}
-
-                          </p>
-
-                        </div>
-
-                      </div>
-
-                      {/* CONTADOR */}
-                      <div
-                        className="
-                          bg-cyan-50
-                          border
-                          border-cyan-200
-                          px-5
-                          py-3
-                          rounded-2xl
-                          w-fit
-                        "
-                      >
-
-                        <p
-                          className="
-                            text-sm
-                            font-bold
-                            text-cyan-600
-                          "
-                        >
-
-                          SITIOS
-
-                        </p>
-
-                        <p
-                          className="
-                            text-3xl
-                            font-black
-                            text-cyan-700
-                          "
-                        >
-
-                          {
-                            tecnico
-                              ?.sitiosAsignados
-                              ?.length || 0
-                          }
-
-                        </p>
-
-                      </div>
+                      </p>
 
                     </div>
 
@@ -710,23 +562,7 @@ function GestionSitios({
                                   <div
                                     key={index}
 
-                                    className="
-                                      flex
-                                      items-center
-                                      gap-2
-                                      bg-cyan-50
-                                      border
-                                      border-cyan-200
-                                      text-cyan-700
-                                      px-4
-                                      py-3
-                                      rounded-2xl
-                                      font-bold
-                                      shadow-sm
-                                      hover:scale-105
-                                      transition-all
-                                      duration-200
-                                    "
+                                    className="flex items-center gap-2 bg-cyan-100 text-cyan-700 px-4 py-2 rounded-xl font-bold"
                                   >
 
                                     <span>
@@ -743,12 +579,7 @@ function GestionSitios({
                                         )
                                       }
 
-                                      className="
-                                        text-red-500
-                                        hover:text-red-700
-                                        font-black
-                                        text-lg
-                                      "
+                                      className="text-red-600 font-black"
                                     >
 
                                       ✕
@@ -762,18 +593,9 @@ function GestionSitios({
 
                           : (
 
-                            <span
-                              className="
-                                bg-slate-100
-                                text-slate-500
-                                px-5
-                                py-4
-                                rounded-2xl
-                                font-bold
-                              "
-                            >
+                            <span className="bg-gray-100 text-gray-500 px-4 py-2 rounded-xl font-bold">
 
-                              📭 Sin sitios asignados
+                              Sin sitios asignados
 
                             </span>
                           )

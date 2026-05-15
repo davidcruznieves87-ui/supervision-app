@@ -71,10 +71,19 @@ const secondaryAuth =
 // 🔥 CREAR USUARIO
 export const crearUsuario =
   async ({
+
     nombre,
+
     email,
+
     password,
+
     rol,
+
+    supervisor = "",
+
+    sitiosAsignados = [],
+
   }) => {
 
     try {
@@ -87,9 +96,13 @@ export const crearUsuario =
       const credenciales =
 
         await createUserWithEmailAndPassword(
+
           secondaryAuth,
+
           email,
+
           password
+
         );
 
       const uid =
@@ -119,12 +132,60 @@ export const crearUsuario =
 
           rol,
 
+          supervisor,
+
+          sitiosAsignados,
+
           activo: true,
 
           fechaCreacion:
             new Date(),
+
         }
       );
+
+      // 🔥 TECNICO
+      if (
+
+  (
+    rol || ""
+  )
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(
+      /[\u0300-\u036f]/g,
+      ""
+    ) === "tecnico"
+) {
+
+        await setDoc(
+
+          doc(
+            db,
+            "tecnicos",
+            uid
+          ),
+
+          {
+
+            uid,
+
+            nombre,
+
+            email,
+
+            supervisor,
+
+            sitiosAsignados,
+
+            activo: true,
+
+            fechaCreacion:
+              new Date(),
+
+          }
+        );
+      }
 
       console.log(
         "Usuario guardado en Firestore"

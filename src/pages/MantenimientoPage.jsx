@@ -1,9 +1,17 @@
+
 import {
   useState,
   useEffect,
+  useRef,
 } from "react";
 
+import jsPDF from "jspdf";
+
 import theme from "../styles/theme";
+
+import {
+  subirImagenOptimizada,
+} from "../services/imagenesService";
 
 import {
   guardarMantenimiento as guardarMantenimientoDB,
@@ -16,6 +24,9 @@ export default function MantenimientoPage() {
   const { supervisor } =
     useAuth();
 
+  const pdfRef =
+    useRef();
+
   const fecha =
     new Date();
 
@@ -25,7 +36,7 @@ export default function MantenimientoPage() {
   const horaActual =
     fecha.toLocaleTimeString();
 
-  // 🔥 LOCAL
+  // 🔥 LOCAL STORAGE
   const datosGuardados =
     JSON.parse(
       localStorage.getItem(
@@ -44,16 +55,13 @@ export default function MantenimientoPage() {
     maquinas,
     setMaquinas,
   ] = useState(
-
     datosGuardados?.maquinas || [
-
       {
         vlt: "",
         comentario: "",
         antes: null,
         despues: null,
       },
-
     ]
   );
 
@@ -65,12 +73,11 @@ export default function MantenimientoPage() {
   const [mensaje, setMensaje] =
     useState("");
 
-  // 🔥 GUARDAR LOCAL
+  // 🔥 LOCAL STORAGE
   useEffect(() => {
 
     localStorage.setItem(
       "mantenimiento_temp",
-
       JSON.stringify({
         sitio,
         maquinas,
@@ -79,103 +86,55 @@ export default function MantenimientoPage() {
 
   }, [sitio, maquinas]);
 
-  // 🔥 MAQUINA ACTUAL
+  // 🔥 MAQUINA ACTIVA
   const maquina =
     maquinas[
       maquinaActiva
     ];
 
   // 🔥 ACTUALIZAR
-  const actualizarMaquina =
-    (
-      campo,
-      valor
-    ) => {
+  const actualizarMaquina = (
+    campo,
+    valor
+  ) => {
 
-      const nuevas =
-        [...maquinas];
+    const nuevas =
+      [...maquinas];
 
-      nuevas[
-        maquinaActiva
-      ][campo] = valor;
+    nuevas[
+      maquinaActiva
+    ][campo] = valor;
 
-      setMaquinas(nuevas);
-    };
+    setMaquinas(nuevas);
+  };
 
   // 🔥 AGREGAR
- const agregarMaquina =
-  () => {
+  const agregarMaquina = () => {
 
     const actual =
       maquinas[
         maquinaActiva
       ];
 
-    // 🔥 VALIDAR VLT
     if (
       !actual.vlt.trim()
     ) {
 
       setMensaje(
-        "⚠️ Ingresa VLT antes de agregar otra máquina"
+        "⚠️ Ingresa VLT"
       );
-
-      setTimeout(() => {
-
-        setMensaje("");
-
-      }, 3000);
-
-      return;
-    }
-
-    // 🔥 VALIDAR DUPLICADOS
-    const existe =
-      maquinas.some(
-        (
-          item,
-          index
-        ) => {
-
-          return (
-            index !==
-              maquinaActiva &&
-            item.vlt
-              .trim()
-              .toLowerCase() ===
-              actual.vlt
-                .trim()
-                .toLowerCase()
-          );
-        }
-      );
-
-    if (existe) {
-
-      setMensaje(
-        "⚠️ Esa VLT ya existe"
-      );
-
-      setTimeout(() => {
-
-        setMensaje("");
-
-      }, 3000);
 
       return;
     }
 
     const nuevas = [
-
       ...maquinas,
-
       {
         vlt: "",
         comentario: "",
         antes: null,
         despues: null,
       },
-
     ];
 
     setMaquinas(nuevas);
@@ -186,136 +145,56 @@ export default function MantenimientoPage() {
   };
 
   // 🔥 ELIMINAR
-  const eliminarMaquina =
-    (index) => {
+  const eliminarMaquina = (
+    index
+  ) => {
 
-      if (
-        maquinas.length === 1
-      ) {
-
-        setMensaje(
-          "⚠️ Debe existir al menos una máquina"
-        );
-
-        return;
-      }
-
-      const nuevas =
-        maquinas.filter(
-          (_, i) =>
-            i !== index
-        );
-
-      setMaquinas(nuevas);
-
-      setMaquinaActiva(0);
-    };
-
-  // 🔥 LIMPIAR
-  const limpiarFormulario =
-    () => {
-
-      localStorage.removeItem(
-        "mantenimiento_temp"
-      );
-
-      setSitio("");
-
-      setMaquinas([
-        {
-          vlt: "",
-          comentario: "",
-          antes: null,
-          despues: null,
-        },
-      ]);
-
-      setMaquinaActiva(0);
+    if (
+      maquinas.length === 1
+    ) {
 
       setMensaje(
-        "🧹 Formulario limpiado"
+        "⚠️ Debe existir al menos una máquina"
       );
 
-      setTimeout(() => {
+      return;
+    }
 
-        setMensaje("");
-
-      }, 3000);
-    };
-
-  // 🔥 BASE64
-  const convertirBase64 =
-    (file) => {
-
-      return new Promise(
-        (resolve) => {
-
-          const reader =
-            new FileReader();
-
-          reader.readAsDataURL(
-            file
-          );
-
-          reader.onload = (
-            event
-          ) => {
-
-            const img =
-              new Image();
-
-            img.src =
-              event.target.result;
-
-            img.onload =
-              () => {
-
-                const canvas =
-                  document.createElement(
-                    "canvas"
-                  );
-
-                const MAX_WIDTH =
-                  150;
-
-                const scale =
-                  MAX_WIDTH /
-                  img.width;
-
-                canvas.width =
-                  MAX_WIDTH;
-
-                canvas.height =
-                  img.height *
-                  scale;
-
-                const ctx =
-                  canvas.getContext(
-                    "2d"
-                  );
-
-                ctx.drawImage(
-                  img,
-                  0,
-                  0,
-                  canvas.width,
-                  canvas.height
-                );
-
-                const compressed =
-                  canvas.toDataURL(
-                    "image/jpeg",
-                    0.4
-                  );
-
-                resolve(
-                  compressed
-                );
-              };
-          };
-        }
+    const nuevas =
+      maquinas.filter(
+        (_, i) =>
+          i !== index
       );
-    };
+
+    setMaquinas(nuevas);
+
+    setMaquinaActiva(0);
+  };
+
+  // 🔥 LIMPIAR
+  const limpiarFormulario = () => {
+
+    localStorage.removeItem(
+      "mantenimiento_temp"
+    );
+
+    setSitio("");
+
+    setMaquinas([
+      {
+        vlt: "",
+        comentario: "",
+        antes: null,
+        despues: null,
+      },
+    ]);
+
+    setMaquinaActiva(0);
+
+    setMensaje(
+      "🧹 Formulario limpiado"
+    );
+  };
 
   // 🔥 GUARDAR
   const guardarFormulario =
@@ -365,8 +244,6 @@ export default function MantenimientoPage() {
             "✅ Mantenimiento guardado"
           );
 
-          limpiarFormulario();
-
         } else {
 
           setMensaje(
@@ -384,6 +261,242 @@ export default function MantenimientoPage() {
       }
     };
 
+  // 🔥 PDF
+  const generarPDF =
+    async () => {
+
+      const pdf =
+        new jsPDF(
+          "p",
+          "mm",
+          "a4"
+        );
+
+      const pageWidth =
+        pdf.internal.pageSize.getWidth();
+
+      let y = 20;
+
+      // 🔥 HEADER
+      pdf.setFillColor(
+        8,
+        145,
+        178
+      );
+
+      pdf.rect(
+        0,
+        0,
+        pageWidth,
+        28,
+        "F"
+      );
+
+      pdf.setTextColor(
+        255,
+        255,
+        255
+      );
+
+      pdf.setFont(
+        "helvetica",
+        "bold"
+      );
+
+      pdf.setFontSize(22);
+
+      pdf.text(
+        "REPORTE DE MANTENIMIENTO",
+        14,
+        18
+      );
+
+      y = 40;
+
+      // 🔥 INFO
+      pdf.setTextColor(
+        0,
+        0,
+        0
+      );
+
+      pdf.setFontSize(12);
+
+      pdf.setFont(
+        "helvetica",
+        "normal"
+      );
+
+      pdf.text(
+        `Sitio: ${sitio}`,
+        15,
+        y
+      );
+
+      y += 8;
+
+      pdf.text(
+        `Tecnico: ${supervisor}`,
+        15,
+        y
+      );
+
+      y += 8;
+
+      pdf.text(
+        `Fecha: ${fechaActual}`,
+        15,
+        y
+      );
+
+      y += 8;
+
+      pdf.text(
+        `Hora: ${horaActual}`,
+        15,
+        y
+      );
+
+      y += 15;
+
+      // 🔥 MAQUINAS
+      for (
+        let i = 0;
+        i < maquinas.length;
+        i++
+      ) {
+
+        const maquina =
+          maquinas[i];
+
+        if (y > 180) {
+
+          pdf.addPage();
+
+          y = 20;
+        }
+
+        // 🔥 CARD
+        pdf.setFillColor(
+          245,
+          245,
+          245
+        );
+
+        pdf.roundedRect(
+          10,
+          y,
+          190,
+          95,
+          4,
+          4,
+          "F"
+        );
+
+        // 🔥 TITULO
+        pdf.setFont(
+          "helvetica",
+          "bold"
+        );
+
+        pdf.setFontSize(16);
+
+        pdf.text(
+          `MAQUINA #${i + 1}`,
+          15,
+          y + 10
+        );
+
+        // 🔥 DATOS
+        pdf.setFont(
+          "helvetica",
+          "normal"
+        );
+
+        pdf.setFontSize(11);
+
+        pdf.text(
+          `VLT: ${maquina.vlt}`,
+          15,
+          y + 22
+        );
+
+        pdf.text(
+          `Comentario: ${maquina.comentario}`,
+          15,
+          y + 32
+        );
+
+        // 🔥 IMAGENES
+        if (
+          maquina.antes?.preview
+        ) {
+
+          pdf.setFont(
+            "helvetica",
+            "bold"
+          );
+
+          pdf.text(
+            "ANTES",
+            15,
+            y + 45
+          );
+
+          pdf.addImage(
+            maquina.antes.preview,
+            "JPEG",
+            15,
+            y + 50,
+            75,
+            40
+          );
+        }
+
+        if (
+          maquina.despues?.preview
+        ) {
+
+          pdf.setFont(
+            "helvetica",
+            "bold"
+          );
+
+          pdf.text(
+            "DESPUES",
+            110,
+            y + 45
+          );
+
+          pdf.addImage(
+            maquina.despues.preview,
+            "JPEG",
+            110,
+            y + 50,
+            75,
+            40
+          );
+        }
+
+        y += 110;
+      }
+
+      // 🔥 FOOTER
+      pdf.setFontSize(10);
+
+      pdf.setTextColor(120);
+
+      pdf.text(
+        "Sistema Enterprise de Supervisión y Mantenimiento",
+        14,
+        290
+      );
+
+      pdf.save(
+        `Mantenimiento_${sitio}.pdf`
+      );
+    };
+
   return (
 
     <div style={theme.layout.page}>
@@ -391,12 +504,12 @@ export default function MantenimientoPage() {
       <div style={theme.layout.content}>
 
         <div
+          ref={pdfRef}
           style={theme.card}
-          className="border border-gray-200"
         >
 
           {/* HEADER */}
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 mb-8">
+          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5 mb-10">
 
             <div>
 
@@ -406,25 +519,9 @@ export default function MantenimientoPage() {
 
               </h1>
 
-              <p className="text-gray-500 text-xl font-bold mt-4">
+              <p className="text-gray-500 text-xl font-bold mt-3">
 
                 Registro técnico de mantenimientos
-
-              </p>
-
-            </div>
-
-            <div className="bg-cyan-50 border border-cyan-200 rounded-3xl p-6">
-
-              <p className="font-bold text-gray-500">
-
-                Técnico
-
-              </p>
-
-              <p className="text-2xl font-black text-cyan-700">
-
-                {supervisor}
 
               </p>
 
@@ -450,13 +547,13 @@ export default function MantenimientoPage() {
           )}
 
           {/* DATOS */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-10">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-10">
 
             <div>
 
               <label className="font-bold text-gray-600">
 
-                Sitio
+                📍 Sitio
 
               </label>
 
@@ -473,56 +570,23 @@ export default function MantenimientoPage() {
 
             </div>
 
-            <div>
-
-              <label className="font-bold text-gray-600">
-
-                Fecha
-
-              </label>
-
-              <input
-                type="text"
-                value={
-                  fechaActual
-                }
-                readOnly
-                style={theme.input}
-              />
-
-            </div>
-
-            <div>
-
-              <label className="font-bold text-gray-600">
-
-                Hora
-
-              </label>
-
-              <input
-                type="text"
-                value={
-                  horaActual
-                }
-                readOnly
-                style={theme.input}
-              />
-
-            </div>
-
           </div>
 
-          {/* FORMULARIO */}
-          <div className="bg-slate-50 border border-gray-200 rounded-3xl p-6">
+          {/* CARD MAQUINA */}
+          <div className="bg-slate-50 border border-gray-200 rounded-3xl p-8">
 
-            <h2 className="text-3xl font-black text-slate-700 mb-6">
+            <div className="flex items-center justify-between mb-8">
 
-              🎰 Máquina #{maquinaActiva + 1}
+              <h2 className="text-3xl font-black text-slate-700">
 
-            </h2>
+                🎰 Máquina #{maquinaActiva + 1}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              </h2>
+
+            </div>
+
+            {/* GRID */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
               <div>
 
@@ -543,9 +607,7 @@ export default function MantenimientoPage() {
                       e.target.value
                     )
                   }
-                  style={
-                    theme.input
-                  }
+                  style={theme.input}
                 />
 
               </div>
@@ -569,31 +631,30 @@ export default function MantenimientoPage() {
                       e.target.value
                     )
                   }
-                  style={
-                    theme.input
-                  }
+                  style={theme.input}
                 />
 
               </div>
 
             </div>
 
-            {/* IMAGENES */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+            {/* FOTOS */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-10">
 
-              <div>
+              {/* ANTES */}
+              <div className="bg-white border border-gray-200 rounded-3xl p-6">
 
-                <label className="font-bold text-gray-600">
+                <h3 className="text-2xl font-black text-slate-700 mb-5">
 
                   📸 Foto Antes
 
-                </label>
+                </h3>
 
                 <input
                   type="file"
                   accept="image/*"
                   style={theme.input}
-                  onChange={(e) => {
+                  onChange={async (e) => {
 
                     const file =
                       e.target.files[0];
@@ -601,18 +662,51 @@ export default function MantenimientoPage() {
                     if (!file)
                       return;
 
-                    convertirBase64(file)
-                      .then(
-                        (
-                          base64
-                        ) => {
+                    try {
 
-                          actualizarMaquina(
-                            "antes",
-                            base64
+                      const url =
+                        await subirImagenOptimizada(
+                          file,
+                          "mantenimientos"
+                        );
+
+                      const readerAntes =
+                        new FileReader();
+
+                      readerAntes.onloadend =
+                        () => {
+
+                          setMaquinas(
+                            (prev) => {
+
+                              const nuevas =
+                                [...prev];
+
+                              nuevas[
+                                maquinaActiva
+                              ].antes = {
+
+                                url,
+
+                                preview:
+                                  readerAntes.result,
+                              };
+
+                              return nuevas;
+                            }
                           );
-                        }
+                        };
+
+                      readerAntes.readAsDataURL(
+                        file
                       );
+
+                    } catch (error) {
+
+                      console.log(error);
+
+                    }
+
                   }}
                 />
 
@@ -620,29 +714,30 @@ export default function MantenimientoPage() {
 
                   <img
                     src={
-                      maquina.antes
+                      maquina.antes?.url
                     }
                     alt="Antes"
-                    className="mt-4 rounded-2xl border border-gray-200 max-h-[250px] w-full object-cover"
+                    className="mt-5 rounded-3xl border border-gray-200 w-full max-h-[350px] object-cover"
                   />
 
                 )}
 
               </div>
 
-              <div>
+              {/* DESPUES */}
+              <div className="bg-white border border-gray-200 rounded-3xl p-6">
 
-                <label className="font-bold text-gray-600">
+                <h3 className="text-2xl font-black text-slate-700 mb-5">
 
                   📸 Foto Después
 
-                </label>
+                </h3>
 
                 <input
                   type="file"
                   accept="image/*"
                   style={theme.input}
-                  onChange={(e) => {
+                  onChange={async (e) => {
 
                     const file =
                       e.target.files[0];
@@ -650,18 +745,51 @@ export default function MantenimientoPage() {
                     if (!file)
                       return;
 
-                    convertirBase64(file)
-                      .then(
-                        (
-                          base64
-                        ) => {
+                    try {
 
-                          actualizarMaquina(
-                            "despues",
-                            base64
+                      const url =
+                        await subirImagenOptimizada(
+                          file,
+                          "mantenimientos"
+                        );
+
+                      const readerDespues =
+                        new FileReader();
+
+                      readerDespues.onloadend =
+                        () => {
+
+                          setMaquinas(
+                            (prev) => {
+
+                              const nuevas =
+                                [...prev];
+
+                              nuevas[
+                                maquinaActiva
+                              ].despues = {
+
+                                url,
+
+                                preview:
+                                  readerDespues.result,
+                              };
+
+                              return nuevas;
+                            }
                           );
-                        }
+                        };
+
+                      readerDespues.readAsDataURL(
+                        file
                       );
+
+                    } catch (error) {
+
+                      console.log(error);
+
+                    }
+
                   }}
                 />
 
@@ -669,10 +797,10 @@ export default function MantenimientoPage() {
 
                   <img
                     src={
-                      maquina.despues
+                      maquina.despues?.url
                     }
                     alt="Después"
-                    className="mt-4 rounded-2xl border border-gray-200 max-h-[250px] w-full object-cover"
+                    className="mt-5 rounded-3xl border border-gray-200 w-full max-h-[350px] object-cover"
                   />
 
                 )}
@@ -683,10 +811,10 @@ export default function MantenimientoPage() {
 
           </div>
 
-          {/* SELECTOR HORIZONTAL */}
-          <div className="overflow-x-auto mt-10 mb-10">
+          {/* TABS */}
+          <div className="overflow-x-auto mt-10">
 
-            <div className="flex gap-4 pb-4 min-w-max">
+            <div className="flex gap-5 pb-5 min-w-max">
 
               {maquinas.map(
                 (
@@ -705,7 +833,7 @@ export default function MantenimientoPage() {
                           index
                         )
                       }
-                      className={`px-6 py-4 rounded-2xl font-black border transition-all duration-300 shadow-lg min-w-[180px] ${
+                      className={`px-8 py-5 rounded-3xl font-black border transition-all duration-300 shadow-lg min-w-[220px] ${
                         maquinaActiva ===
                         index
                           ? "bg-cyan-600 text-white border-cyan-600 scale-105"
@@ -724,14 +852,13 @@ export default function MantenimientoPage() {
 
                     </button>
 
-                    {/* ELIMINAR */}
                     <button
                       onClick={() =>
                         eliminarMaquina(
                           index
                         )
                       }
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-8 h-8 font-black shadow-lg"
+                      className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full w-10 h-10 font-black shadow-lg"
                     >
 
                       ✕
@@ -748,7 +875,7 @@ export default function MantenimientoPage() {
           </div>
 
           {/* BOTONES */}
-          <div className="flex flex-wrap gap-5">
+          <div className="flex flex-wrap gap-5 mt-10">
 
             <button
               onClick={
@@ -777,12 +904,15 @@ export default function MantenimientoPage() {
             </button>
 
             <button
+              onClick={
+                generarPDF
+              }
               style={
-                theme.button.danger
+                theme.button.primary
               }
             >
 
-              📄 PDF
+              📄 Descargar PDF
 
             </button>
 

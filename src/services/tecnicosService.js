@@ -8,18 +8,47 @@ import {
 import { db } from "../firebase";
 
 export const obtenerTecnicos =
-  async (supervisor) => {
+  async (
+    supervisor,
+    rol
+  ) => {
 
     try {
 
-      const q = query(
-        collection(db, "tecnicos"),
-        where(
-          "supervisor",
-          "==",
-          supervisor
-        )
-      );
+      let q;
+
+      // 🔥 ADMIN Y SUPERADMIN
+      if (
+
+        rol === "admin" ||
+
+        rol === "superadmin"
+
+      ) {
+
+        q = query(
+          collection(
+            db,
+            "tecnicos"
+          )
+        );
+      }
+
+      // 🔥 SUPERVISOR
+      else {
+
+  console.log(
+    "SUPERVISOR RECIBIDO:",
+    supervisor
+  );
+
+  q = query(
+    collection(
+      db,
+      "tecnicos"
+    )
+  );
+}
 
       const querySnapshot =
         await getDocs(q);
@@ -29,8 +58,11 @@ export const obtenerTecnicos =
       querySnapshot.forEach((d) => {
 
         datos.push({
+
           id: d.id,
+
           ...d.data(),
+
         });
 
       });

@@ -8,18 +8,49 @@ import {
 import { db } from "../firebase";
 
 export const obtenerSitios =
-  async (supervisor) => {
+  async (
+    supervisor,
+    rol
+  ) => {
 
     try {
 
-      const q = query(
-        collection(db, "sitios"),
-        where(
-          "supervisor",
-          "==",
-          supervisor
-        )
-      );
+      let q;
+
+      // 🔥 ADMIN Y SUPERADMIN
+      if (
+
+        rol === "admin" ||
+
+        rol === "superadmin"
+
+      ) {
+
+        q = query(
+          collection(
+            db,
+            "sitios"
+          )
+        );
+      }
+
+      // 🔥 SUPERVISOR
+      else {
+
+        q = query(
+
+          collection(
+            db,
+            "sitios"
+          ),
+
+          where(
+            "supervisor",
+            "==",
+            supervisor
+          )
+        );
+      }
 
       const querySnapshot =
         await getDocs(q);
@@ -29,8 +60,11 @@ export const obtenerSitios =
       querySnapshot.forEach((d) => {
 
         datos.push({
+
           id: d.id,
+
           ...d.data(),
+
         });
 
       });

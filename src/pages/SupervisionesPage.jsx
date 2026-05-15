@@ -2,27 +2,28 @@ import {
   useState,
   useEffect,
 } from "react";
+
+import {
+  subirImagenOptimizada,
+} from "../services/imagenesService";
+
 import {
   guardarSupervisionDB,
 } from "../services/supervisionesService";
+
 import theme
 from "../styles/theme";
+
 import {
   generarPDFSupervision,
-} from "../utils/pdfGenerator";
+} from "../utils/pdf/pdfSupervision";
 
-import logo
-from "../logo.png";
 import SupervisionForm
 from "../components/SupervisionForm";
 
 import {
   obtenerTecnicos,
 } from "../services/tecnicosService";
-
-import {
-  obtenerSitios,
-} from "../services/sitiosService";
 
 import useAuth
 from "../hooks/useAuth";
@@ -64,26 +65,23 @@ export default function SupervisionesPage() {
 
   const [imagen, setImagen] =
     useState(null);
-const [mensaje, setMensaje] =
-  useState("");
 
-const [folio] =
-  useState(
-    Date.now()
-  );
+  const [mensaje, setMensaje] =
+    useState("");
 
-const [online] =
-  useState(
-    navigator.onLine
-  );
+  const [folio] =
+    useState(
+      Date.now()
+    );
+
+  const [online] =
+    useState(
+      navigator.onLine
+    );
+
   const [
     tecnicos,
     setTecnicos,
-  ] = useState([]);
-
-  const [
-    sitios,
-    setSitios,
   ] = useState([]);
 
   const [
@@ -103,28 +101,51 @@ const [online] =
       setTecnicos(datos);
     };
 
-  // 🔥 CARGAR SITIOS
-  const cargarSitios =
-    async () => {
-
-      const datos =
-        await obtenerSitios(
-          supervisor
-        );
-
-      setSitios(datos);
-    };
-
-  // 🔥 CARGAR DATOS
+  // 🔥 INIT
   useEffect(() => {
 
     if (!supervisor) return;
 
     cargarTecnicos();
 
-    cargarSitios();
-
   }, [supervisor]);
+
+  // 🔥 RESTAURAR BORRADOR
+  useEffect(() => {
+
+    const borrador =
+      localStorage.getItem(
+        "supervision_borrador"
+      );
+
+    if (!borrador) return;
+
+    try {
+
+      const data =
+        JSON.parse(borrador);
+
+      setSitio(
+        data.sitio || ""
+      );
+
+      setTecnico(
+        data.tecnico || ""
+      );
+
+      setFallas(
+        data.fallas || []
+      );
+
+    } catch (error) {
+
+      console.log(
+        "Error restaurando borrador:",
+        error
+      );
+    }
+
+  }, []);
 
   // 🔥 FILTRAR SITIOS
   useEffect(() => {
@@ -138,87 +159,31 @@ const [online] =
       return;
     }
 
-    const filtrados =
-      sitios.filter(
-        (s) =>
-          s.tecnico === tecnico
+    // 🔥 BUSCAR TECNICO
+    const tecnicoSeleccionado =
+      tecnicos.find(
+        (t) =>
+          t.nombre === tecnico
+      );
+
+    // 🔥 SITIOS DESDE TECNICO
+    const sitiosAsignados =
+      tecnicoSeleccionado
+        ?.sitiosAsignados || [];
+
+    // 🔥 FORMATEAR
+    const sitiosFormateados =
+      sitiosAsignados.map(
+        (sitio) => ({
+          nombre: sitio,
+        })
       );
 
     setSitiosFiltrados(
-      filtrados
+      sitiosFormateados
     );
 
-  }, [tecnico, sitios]);
-
-  // 🔥 COMPRESIÓN IMAGEN
-  const comprimirImagen =
-    (file) => {
-
-      return new Promise(
-        (resolve) => {
-
-          const reader =
-            new FileReader();
-
-          reader.readAsDataURL(file);
-
-          reader.onload =
-            (event) => {
-
-              const img =
-                new Image();
-
-              img.src =
-                event.target.result;
-
-              img.onload = () => {
-
-                const canvas =
-                  document.createElement(
-                    "canvas"
-                  );
-
-                const MAX_WIDTH =
-                  150;
-
-                const scaleSize =
-                  MAX_WIDTH /
-                  img.width;
-
-                canvas.width =
-                  MAX_WIDTH;
-
-                canvas.height =
-                  img.height *
-                  scaleSize;
-
-                const ctx =
-                  canvas.getContext(
-                    "2d"
-                  );
-
-                ctx.drawImage(
-                  img,
-                  0,
-                  0,
-                  canvas.width,
-                  canvas.height
-                );
-
-                const compressedBase64 =
-                  canvas.toDataURL(
-                    "image/jpeg",
-                    0.6
-                  );
-
-                resolve(
-                  compressedBase64
-                );
-              };
-            };
-        }
-      );
-    };
+  }, [tecnico, tecnicos]);
 
   // 🔥 AGREGAR FALLA
   const agregarFalla =
@@ -226,136 +191,312 @@ const [online] =
 
       if (!falla) return;
 
-      let imagenComprimida =
+      let imagenProcesada =
         null;
 
-      if (imagen) {
+      try {
 
-        imagenComprimida =
-          await comprimirImagen(
-            imagen
-          );
+        if (imagen) {
+
+          // 🔥 PREVIEW LOCAL
+          const preview =
+            await new Promise(
+              (resolve) => {
+
+                const reader =
+                  new FileReader();
+
+                reader.onload =
+                  (e) => {
+
+                    resolve(
+                      e.target.result
+                    );
+                  };
+
+                reader.readAsDataURL(
+                  imagen
+                );
+              }
+            );
+
+          // 🔥 STORAGE
+          const resultado =
+            await subirImagenOptimizada(
+              imagen,
+              "supervisiones"
+            );
+
+          const url =
+            typeof resultado ===
+            "string"
+
+              ? resultado
+
+              : resultado?.url || "";
+
+          imagenProcesada = {
+
+            url,
+
+            preview,
+
+          };
+        }
+
+        const nuevaFalla = {
+
+          vlt,
+
+          descripcion:
+            falla,
+
+          urgencia,
+
+          imagen:
+            imagenProcesada,
+
+        };
+
+        const nuevasFallas = [
+          ...fallas,
+          nuevaFalla,
+        ];
+
+        setFallas(
+          nuevasFallas
+        );
+
+        // 🔥 GUARDAR BORRADOR
+        localStorage.setItem(
+          "supervision_borrador",
+          JSON.stringify({
+
+            sitio,
+
+            tecnico,
+
+            fallas:
+              nuevasFallas,
+
+          })
+        );
+
+        setFalla("");
+
+        setVlt("");
+
+        setUrgencia("Baja");
+
+        setImagen(null);
+
+      } catch (error) {
+
+        console.log(
+          "Error agregando falla:",
+          error
+        );
+      }
+    };
+
+  // 🔥 GUARDAR
+  const guardarSupervision =
+    async () => {
+
+      if (
+        !sitio ||
+        !tecnico ||
+        fallas.length === 0
+      ) {
+
+        setMensaje(
+          "⚠️ Completa todos los campos"
+        );
+
+        return;
       }
 
-      const nuevaFalla = {
+      const supervision = {
 
-        vlt,
+        folio,
 
-        descripcion:
-          falla,
+        supervisor,
 
-        urgencia,
+        sitio,
 
-        imagen:
-          imagenComprimida,
+        tecnico,
+
+        fechaHora:
+          new Date()
+            .toLocaleString(),
+
+        fallas: fallas.map(
+          (falla) => ({
+
+            vlt:
+              falla.vlt || "",
+
+            descripcion:
+              falla.descripcion || "",
+
+            urgencia:
+              falla.urgencia || "Baja",
+
+            imagen:
+              falla.imagen?.url ||
+
+              falla.imagen ||
+
+              "",
+
+          })
+        ),
 
       };
 
-      setFallas([
-        ...fallas,
-        nuevaFalla,
-      ]);
+      try {
 
-      setFalla("");
+        // 🔥 ONLINE
+        if (online) {
 
-      setVlt("");
+          const ok =
+            await guardarSupervisionDB(
+              supervision
+            );
 
-      setUrgencia("Baja");
+          if (!ok) {
 
-      setImagen(null);
-    };
+            setMensaje(
+              "❌ Error al guardar"
+            );
 
-    const guardarSupervision =
-  async () => {
+            return;
+          }
 
-    if (
-      !sitio ||
-      !tecnico ||
-      fallas.length === 0
-    ) {
+          setMensaje(
+            "✅ Supervisión guardada correctamente"
+          );
 
-      setMensaje(
-        "⚠️ Completa todos los campos"
-      );
+        } else {
 
-      return;
-    }
+          // 🔥 OFFLINE
+          const pendientes =
+            JSON.parse(
 
-    const supervision = {
+              localStorage.getItem(
+                "supervisiones_pendientes"
+              ) || "[]"
 
-      folio,
+            );
 
-      supervisor,
-
-      sitio,
-
-      tecnico,
-
-      fechaHora:
-        new Date()
-          .toLocaleString(),
-
-      fallas,
-
-    };
-
-    try {
-
-      // 🔥 ONLINE
-      if (online) {
-
-        const ok =
-          await guardarSupervisionDB(
+          pendientes.push(
             supervision
           );
 
-        if (!ok) {
+          localStorage.setItem(
 
-          setMensaje(
-            "❌ Error al guardar"
+            "supervisiones_pendientes",
+
+            JSON.stringify(
+              pendientes
+            )
+
           );
 
-          return;
+          setMensaje(
+
+            "📴 Supervisión guardada offline"
+
+          );
         }
 
-        setMensaje(
-          "✅ Supervisión guardada correctamente"
+        // 🔥 LIMPIAR
+        setSitio("");
+
+        setTecnico("");
+
+        setFallas([]);
+
+        setFalla("");
+
+        setVlt("");
+
+        setUrgencia("Baja");
+
+        setImagen(null);
+
+        localStorage.removeItem(
+          "supervision_borrador"
         );
 
-      } else {
+        setTimeout(() => {
 
-        // 🔥 OFFLINE
-        const pendientes =
+          setMensaje("");
+
+        }, 4000);
+
+      } catch (error) {
+
+        console.log(error);
+
+        setMensaje(
+          "❌ Error al guardar"
+        );
+      }
+    };
+
+  // 🔥 PDF
+  const descargarPDF =
+    async () => {
+
+      try {
+
+        const borrador =
           JSON.parse(
 
             localStorage.getItem(
-              "supervisiones_pendientes"
-            ) || "[]"
+              "supervision_borrador"
+            ) || "{}"
 
           );
 
-        pendientes.push(
-          supervision
-        );
+        await generarPDFSupervision({
 
-        localStorage.setItem(
+          folio,
 
-          "supervisiones_pendientes",
+          sitio:
+            borrador.sitio ||
+            sitio,
 
-          JSON.stringify(
-            pendientes
-          )
+          tecnico:
+            borrador.tecnico ||
+            tecnico,
 
-        );
+          supervisor,
 
-        setMensaje(
+          fallas:
+            borrador.fallas ||
+            fallas,
 
-          "📴 Supervisión guardada offline"
+        });
 
+      } catch (error) {
+
+        console.log(
+          "Error PDF:",
+          error
         );
       }
+    };
 
-      // 🔥 LIMPIAR
+  // 🔥 LIMPIAR
+  const limpiarFormulario =
+    () => {
+
+      localStorage.removeItem(
+        "supervision_borrador"
+      );
+
       setSitio("");
 
       setTecnico("");
@@ -370,75 +511,16 @@ const [online] =
 
       setImagen(null);
 
-      localStorage.removeItem(
-        "supervision_borrador"
+      setMensaje(
+        "🗑️ Formulario limpiado"
       );
 
       setTimeout(() => {
 
         setMensaje("");
 
-      }, 4000);
-
-    } catch (error) {
-
-      console.log(error);
-
-      setMensaje(
-        "❌ Error al guardar"
-      );
-    }
-  };
-
-const descargarPDF =
-  () => {
-
-    generarPDFSupervision({
-
-      logo,
-
-      folio,
-
-      sitio,
-
-      tecnico,
-
-      fallas,
-
-    });
-  };
-
-const limpiarFormulario =
-  () => {
-
-    localStorage.removeItem(
-      "supervision_borrador"
-    );
-
-    setSitio("");
-
-    setTecnico("");
-
-    setFallas([]);
-
-    setFalla("");
-
-    setVlt("");
-
-    setUrgencia("Baja");
-
-    setImagen(null);
-
-    setMensaje(
-      "🗑️ Formulario limpiado"
-    );
-
-    setTimeout(() => {
-
-      setMensaje("");
-
-    }, 3000);
-  };
+      }, 3000);
+    };
 
   return (
 
@@ -465,17 +547,21 @@ const limpiarFormulario =
             }
 
             falla={falla}
+
             setFalla={setFalla}
 
             vlt={vlt}
+
             setVlt={setVlt}
 
             urgencia={urgencia}
+
             setUrgencia={
               setUrgencia
             }
 
             imagen={imagen}
+
             setImagen={
               setImagen
             }
@@ -485,16 +571,16 @@ const limpiarFormulario =
             }
 
             guardarSupervision={
-  guardarSupervision
-}
+              guardarSupervision
+            }
 
             descargarPDF={
-  descargarPDF
-}
+              descargarPDF
+            }
 
             limpiarFormulario={
-  limpiarFormulario
-}
+              limpiarFormulario
+            }
 
           />
 

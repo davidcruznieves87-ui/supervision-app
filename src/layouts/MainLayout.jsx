@@ -45,62 +45,7 @@ function MainLayout({
   let menu = [];
 
   // 🔥 SUPERADMIN
-  if (rol === "superadmin") {
-
-    menu = [
-
-      {
-        nombre:
-          "📊 Dashboard",
-
-        ruta:
-          "/",
-      },
-
-      {
-        nombre:
-          "📝 Supervisiones",
-
-        ruta:
-          "/supervisiones",
-      },
-
-      {
-        nombre:
-          "📁 Historial",
-
-        ruta:
-          "/historial",
-      },
-
-      {
-        nombre:
-          "🔨 Mantenimientos",
-
-        ruta:
-          "/mantenimiento",
-      },
-
-      {
-        nombre:
-          "📈 Dashboard MTTO",
-
-        ruta:
-          "/dashboard-mantenimiento",
-      },
-
-      {
-        nombre:
-          "👨‍💼 Administración",
-
-        ruta:
-          "/admin",
-      },
-    ];
-  }
-
-  // 🔥 SUPERVISOR
-else if (rol === "supervisor") {
+if (rol === "superadmin") {
 
   menu = [
 
@@ -128,25 +73,75 @@ else if (rol === "supervisor") {
       nombre: "📈 Dashboard MTTO",
       ruta: "/dashboard-mantenimiento",
     },
+
+    {
+      nombre: "👨‍💼 Administración",
+      ruta: "/admin",
+    },
+
+  ];
+}
+
+  // 🔥 SUPERVISOR
+else if (rol === "supervisor") {
+
+  menu = [
+
+    {
+      nombre: "📊 Dashboard",
+      ruta: "/",
+    },
+
+    {
+      nombre: "📝 Supervisiones",
+      ruta: "/supervisiones",
+    },
+
+    {
+      nombre: "📁 Historial",
+      ruta: "/historial",
+    },
+
+    {
+      nombre: "👨‍💼 Administración",
+      ruta: "/admin",
+    },
+
+    {
+      nombre: "📈 Dashboard Operativo",
+      ruta: "/dashboard-mantenimiento",
+    },
+
   ];
 }
 
   // 🔥 ADMIN
-  else if (
-    rol === "admin"
-  ) {
+ else if (rol === "admin") {
 
-    menu = [
+  menu = [
 
-      {
-        nombre:
-          "👨‍💼 Administración",
+    {
+      nombre: "📊 Dashboard",
+      ruta: "/",
+    },
 
-        ruta:
-          "/admin",
-      },
-    ];
-  }
+    {
+      nombre: "👨‍💼 Administración",
+      ruta: "/admin",
+    },
+
+    {
+      nombre: "📁 Historial",
+      ruta: "/historial",
+    },
+
+    {
+      nombre: "📈 Dashboard General",
+      ruta: "/dashboard-mantenimiento",
+    },
+
+  ];
+}
 
   // 🔥 TECNICO
   else if (

@@ -22,7 +22,6 @@ import MantenimientoPage from "../pages/MantenimientoPage";
 import MantenimientoDashboard from "../pages/MantenimientoDashboard";
 
 function AppRouter({
-
   usuario,
 }) {
 
@@ -59,153 +58,289 @@ function AppRouter({
 
           {/* 🔥 SUPERADMIN */}
           {
-            rol ===
-              "superadmin"
+            rol === "superadmin"
 
-            &&
+            && (
 
-            <>
-              <Route
-                path="/"
-                element={
-                  <DashboardPage />
-                }
-              />
+              <>
 
-              <Route
-                path="/supervisiones"
-                element={
-                  <SupervisionesPage />
-                }
-              />
+                <Route
+                  path="/"
+                  element={
+                    <DashboardPage />
+                  }
+                />
 
-              <Route
-  path="/historial"
-  element={
-    <HistorialPage
-      usuario={usuario}
-    />
-  }
-/>
+                <Route
+                  path="/supervisiones"
+                  element={
+                    <SupervisionesPage />
+                  }
+                />
 
-              <Route
-                path="/mantenimiento"
-                element={
-                  <MantenimientoPage />
-                }
-              />
+                <Route
+                  path="/historial"
+                  element={
+                    <HistorialPage
+                      usuario={usuario}
+                    />
+                  }
+                />
 
-              <Route
-                path="/dashboard-mantenimiento"
-                element={
-                  <MantenimientoDashboard />
-                }
-              />
+                <Route
+                  path="/mantenimiento"
+                  element={
+                    <MantenimientoPage />
+                  }
+                />
 
-              <Route
-                path="/admin"
-                element={
-                  <AdminPage />
-                }
-              />
-            </>
-          }
+                <Route
+                  path="/dashboard-mantenimiento"
+                  element={
+                    <MantenimientoDashboard />
+                  }
+                />
 
-          {/* 🔥 SUPERVISOR */}
-          {
-            rol ===
-              "supervisor"
+                <Route
+                  path="/admin"
+                  element={
 
-            &&
+                    <AdminPage
 
-            <>
-              <Route
-                path="/"
-                element={
-                  <DashboardPage />
-                }
-              />
+                      usuario={usuario}
 
-              <Route
-                path="/supervisiones"
-                element={
-                  <SupervisionesPage />
-                }
-              />
+                      rol={rol}
 
-              <Route
-                path="/mantenimiento"
-                element={
-                  <MantenimientoPage />
-                }
-              />
+                      supervisor={
+                        usuario?.nombre || ""
+                      }
 
-              <Route
-  path="/historial"
-  element={
-    <HistorialPage
-      usuario={usuario}
-    />
-  }
-/>
+                      tecnicos={
+                        usuario?.tecnicos || []
+                      }
 
-              <Route
-                path="/dashboard-mantenimiento"
-                element={
-                  <MantenimientoDashboard />
-                }
-              />
-            </>
+                      sitios={
+                        usuario?.sitios || []
+                      }
+
+                      cargarTecnicos={() => {}}
+
+                      cargarSitios={() => {}}
+
+                    />
+                  }
+                />
+
+                <Route
+                  path="*"
+                  element={
+                    <Navigate to="/" />
+                  }
+                />
+
+              </>
+            )
           }
 
           {/* 🔥 ADMIN */}
           {
-            rol ===
-              "admin"
+            rol === "admin"
 
-            &&
+            && (
 
-            <>
-              <Route
-                path="/admin"
-                element={
-                  <AdminPage />
-                }
-              />
-            </>
+              <>
+
+                <Route
+                  path="/"
+                  element={
+                    <DashboardPage />
+                  }
+                />
+
+                <Route
+                  path="/admin"
+                  element={
+
+                    <AdminPage
+
+                      usuario={usuario}
+
+                      rol={rol}
+
+                      supervisor={
+                        usuario?.nombre || ""
+                      }
+
+                      tecnicos={
+                        usuario?.tecnicos || []
+                      }
+
+                      sitios={
+                        usuario?.sitios || []
+                      }
+
+                      cargarTecnicos={() => {}}
+
+                      cargarSitios={() => {}}
+
+                    />
+                  }
+                />
+
+                <Route
+                  path="/historial"
+                  element={
+                    <HistorialPage
+                      usuario={usuario}
+                    />
+                  }
+                />
+
+                <Route
+                  path="/dashboard-mantenimiento"
+                  element={
+                    <MantenimientoDashboard />
+                  }
+                />
+
+                <Route
+                  path="*"
+                  element={
+                    <Navigate to="/" />
+                  }
+                />
+
+              </>
+            )
+          }
+
+          {/* 🔥 SUPERVISOR */}
+          {
+            rol === "supervisor"
+
+            && (
+
+              <>
+
+                <Route
+                  path="/"
+                  element={
+                    <DashboardPage />
+                  }
+                />
+
+                <Route
+                  path="/supervisiones"
+                  element={
+                    <SupervisionesPage />
+                  }
+                />
+
+                <Route
+                  path="/historial"
+                  element={
+                    <HistorialPage
+                      usuario={usuario}
+                    />
+                  }
+                />
+
+                <Route
+                  path="/admin"
+                  element={
+
+                    <AdminPage
+
+                      usuario={usuario}
+
+                      rol={rol}
+
+                      supervisor={
+                        usuario?.nombre || ""
+                      }
+
+                      tecnicos={
+                        usuario?.tecnicos || []
+                      }
+
+                      sitios={
+                        usuario?.sitios || []
+                      }
+
+                      cargarTecnicos={() => {}}
+
+                      cargarSitios={() => {}}
+
+                    />
+                  }
+                />
+
+                <Route
+                  path="/dashboard-mantenimiento"
+                  element={
+                    <MantenimientoDashboard />
+                  }
+                />
+
+                <Route
+                  path="*"
+                  element={
+                    <Navigate to="/" />
+                  }
+                />
+
+              </>
+            )
           }
 
           {/* 🔥 TECNICO */}
           {
-            rol ===
-              "tecnico"
+            rol === "tecnico"
 
-            &&
+            && (
 
-            <>
-              <Route
-                path="/mantenimiento"
-                element={
-                  <MantenimientoPage />
-                }
-              />
+              <>
 
-              <Route
-                path="/dashboard-mantenimiento"
-                element={
-                  <MantenimientoDashboard />
-                }
-              />
+                <Route
+                  path="/mantenimiento"
+                  element={
+                    <MantenimientoPage />
+                  }
+                />
+
+                <Route
+                  path="/dashboard-mantenimiento"
+                  element={
+                    <MantenimientoDashboard />
+                  }
+                />
+
+                <Route
+                  path="*"
+                  element={
+                    <Navigate
+                      to="/mantenimiento"
+                    />
+                  }
+                />
+
+              </>
+            )
+          }
+
+          {/* 🔥 SIN ROL */}
+          {
+            !rol
+
+            && (
 
               <Route
                 path="*"
                 element={
-                  <Navigate
-                    to="/mantenimiento"
-                  />
+                  <Navigate to="/" />
                 }
               />
-            </>
+            )
           }
 
         </Routes>

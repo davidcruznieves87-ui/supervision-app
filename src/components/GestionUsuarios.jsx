@@ -8,6 +8,10 @@ import {
   obtenerUsuarios,
 } from "../services/usuariosService";
 
+import {
+  obtenerSitios,
+} from "../services/sitiosService";
+
 function GestionUsuarios() {
 
   const [usuarios, setUsuarios] =
@@ -25,19 +29,46 @@ function GestionUsuarios() {
   const [rol, setRol] =
     useState("supervisor");
 
-  // 🔥 NORMALIZAR ROLES
-  const normalizarRol = (rol) => {
+  const [
+    supervisor,
+    setSupervisor,
+  ] = useState("");
 
-    if (!rol) return "Sin rol";
+  const [
+    sitiosDisponibles,
+    setSitiosDisponibles,
+  ] = useState([]);
+
+  const [
+    sitiosAsignados,
+    setSitiosAsignados,
+  ] = useState([]);
+const [
+  supervisores,
+  setSupervisores,
+] = useState([]);
+
+  // 🔥 NORMALIZAR ROLES
+  const normalizarRol = (
+    rol
+  ) => {
+
+    if (!rol)
+      return "Sin rol";
 
     const r =
       rol.toLowerCase();
 
-    if (r === "administrador") {
+    if (
+      r ===
+      "administrador"
+    ) {
       return "admin";
     }
 
-    if (r === "técnico") {
+    if (
+      r === "técnico"
+    ) {
       return "tecnico";
     }
 
@@ -45,18 +76,87 @@ function GestionUsuarios() {
   };
 
   // 🔥 CARGAR USUARIOS
-  const cargarUsuarios =
-    async () => {
+const cargarUsuarios =
+  async () => {
+
+    try {
 
       const data =
         await obtenerUsuarios();
 
-      setUsuarios(data);
+      const usuariosData =
+        data || [];
+
+      setUsuarios(
+        usuariosData
+      );
+
+      // 🔥 FILTRAR SUPERVISORES
+      const supervisoresFiltrados =
+
+        usuariosData.filter(
+          (u) =>
+
+            (
+              u.rol || ""
+            )
+              .toLowerCase()
+              .trim() ===
+            "supervisor"
+        );
+
+      setSupervisores(
+        supervisoresFiltrados
+      );
+
+    } catch (error) {
+
+      console.log(
+        "ERROR USUARIOS:",
+        error
+      );
+
+      setUsuarios([]);
+
+      setSupervisores([]);
+    }
+  };
+
+  // 🔥 CARGAR SITIOS
+  const cargarSitios =
+    async () => {
+
+      try {
+
+        const data =
+          await obtenerSitios(
+            "",
+            "superadmin"
+          );
+
+        setSitiosDisponibles(
+          data || []
+        );
+
+      } catch (error) {
+
+        console.log(
+          "ERROR SITIOS:",
+          error
+        );
+
+        setSitiosDisponibles(
+          []
+        );
+      }
     };
 
+  // 🔥 CARGAR DATOS
   useEffect(() => {
 
     cargarUsuarios();
+
+    cargarSitios();
 
   }, []);
 
@@ -89,6 +189,11 @@ function GestionUsuarios() {
           password,
 
           rol,
+
+          supervisor,
+
+          sitiosAsignados,
+
         });
 
       if (resp.ok) {
@@ -103,7 +208,14 @@ function GestionUsuarios() {
 
         setPassword("");
 
-        setRol("supervisor");
+        setRol(
+          "supervisor"
+        );
+
+        // 🔥 LIMPIAR
+        setSupervisor("");
+
+        setSitiosAsignados([]);
 
         cargarUsuarios();
 
@@ -134,6 +246,7 @@ function GestionUsuarios() {
 
         marginTop:
           "20px",
+
       }}
     >
 
@@ -145,9 +258,12 @@ function GestionUsuarios() {
 
           marginBottom:
             "20px",
+
         }}
       >
+
         👨‍💼 Gestión de Usuarios
+
       </h2>
 
       {/* 🔥 FORMULARIO */}
@@ -166,11 +282,13 @@ function GestionUsuarios() {
               "repeat(auto-fit,minmax(220px,1fr))",
 
             gap: "15px",
+
           }}
         >
 
           <input
             type="text"
+
             placeholder="Nombre"
 
             value={nombre}
@@ -186,6 +304,7 @@ function GestionUsuarios() {
 
           <input
             type="email"
+
             placeholder="Correo"
 
             value={email}
@@ -201,6 +320,7 @@ function GestionUsuarios() {
 
           <input
             type="password"
+
             placeholder="Contraseña"
 
             value={password}
@@ -244,6 +364,111 @@ function GestionUsuarios() {
 
           </select>
 
+          {/* 🔥 TECNICO */}
+          {
+            rol ===
+              "tecnico"
+
+            && (
+
+              <>
+
+                <select
+
+  value={supervisor}
+
+  onChange={(e) =>
+    setSupervisor(
+      e.target.value
+    )
+  }
+
+  style={inputStyle}
+>
+
+  <option value="">
+    Seleccionar supervisor
+  </option>
+
+  {
+    supervisores.map(
+      (sup) => (
+
+       <option
+  key={sup.id}
+  value={sup.nombre.trim()}
+>
+
+  {sup.nombre}
+
+</option>
+      )
+    )
+  }
+
+</select>
+
+                <select
+
+                  multiple
+
+                  value={
+                    sitiosAsignados
+                  }
+
+                  onChange={(e) => {
+
+                    const values =
+                      Array.from(
+
+                        e.target
+                          .selectedOptions,
+
+                        (option) =>
+                          option.value
+                      );
+
+                    setSitiosAsignados(
+                      values
+                    );
+                  }}
+
+                  style={{
+                    ...inputStyle,
+                    minHeight:
+                      "120px",
+                  }}
+                >
+
+                  {
+                    sitiosDisponibles.map(
+                      (sitio) => (
+
+                        <option
+                          key={
+                            sitio.id
+                          }
+
+                          value={
+                            sitio.nombre
+                          }
+                        >
+
+                          {
+                            sitio.nombre
+                          }
+
+                        </option>
+                      )
+                    )
+                  }
+
+                </select>
+
+              </>
+            )
+          }
+
         </div>
 
         <button
@@ -267,10 +492,13 @@ function GestionUsuarios() {
 
         <h3
           style={{
-            marginBottom: "15px",
+            marginBottom:
+              "15px",
           }}
         >
+
           Usuarios Registrados
+
         </h3>
 
         <div
@@ -282,6 +510,7 @@ function GestionUsuarios() {
               "repeat(auto-fit,minmax(280px,1fr))",
 
             gap: "15px",
+
           }}
         >
 
@@ -341,6 +570,7 @@ function GestionUsuarios() {
 
                       fontSize:
                         "14px",
+
                     }}
                   >
 
@@ -370,49 +600,68 @@ const inputStyle = {
 
   padding: "12px",
 
-  borderRadius: "10px",
+  borderRadius:
+    "10px",
 
-  border: "1px solid #374151",
+  border:
+    "1px solid #374151",
 
-  background: "#1F2937",
+  background:
+    "#1F2937",
 
-  color: "white",
+  color:
+    "white",
 
-  outline: "none",
+  outline:
+    "none",
 
-  fontSize: "14px",
+  fontSize:
+    "14px",
 };
 
 const buttonStyle = {
 
-  marginTop: "20px",
+  marginTop:
+    "20px",
 
-  background: "#2563EB",
+  background:
+    "#2563EB",
 
-  color: "white",
+  color:
+    "white",
 
-  border: "none",
+  border:
+    "none",
 
-  padding: "12px 20px",
+  padding:
+    "12px 20px",
 
-  borderRadius: "12px",
+  borderRadius:
+    "12px",
 
-  cursor: "pointer",
+  cursor:
+    "pointer",
 
-  fontWeight: "bold",
+  fontWeight:
+    "bold",
 
-  fontSize: "15px",
+  fontSize:
+    "15px",
 };
 
 const cardStyle = {
 
-  background: "#1F2937",
+  background:
+    "#1F2937",
 
-  padding: "18px",
+  padding:
+    "18px",
 
-  borderRadius: "15px",
+  borderRadius:
+    "15px",
 
-  border: "1px solid #374151",
+  border:
+    "1px solid #374151",
 };
 
 export default GestionUsuarios;

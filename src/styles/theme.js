@@ -2,27 +2,27 @@ const theme = {
 
   colors: {
 
-    background: "#f3f4f6",
+    background: "#F1F5F9",
 
-    sidebar: "#111827",
+    sidebar: "#0F172A",
 
-    card: "#ffffff",
+    card: "#FFFFFF",
 
-    primary: "#06b6d4",
+    primary: "#06B6D4",
 
-    primaryHover: "#0891b2",
+    primaryHover: "#0891B2",
 
-    success: "#22c55e",
+    success: "#22C55E",
 
-    error: "#ef4444",
+    error: "#EF4444",
 
-    warning: "#f59e0b",
+    warning: "#F59E0B",
 
-    text: "#111827",
+    text: "#0F172A",
 
-    textLight: "#6b7280",
+    textLight: "#64748B",
 
-    border: "#d1d5db",
+    border: "#E2E8F0",
 
   },
 
@@ -32,13 +32,16 @@ const theme = {
 
       minHeight: "100vh",
 
-      background: "#f3f4f6",
+      background:
+        "linear-gradient(to bottom right, #F8FAFC, #EEF2FF)",
+
+      padding: "24px",
 
     },
 
     content: {
 
-      padding: "20px",
+      padding: "10px",
 
     },
 
@@ -48,13 +51,14 @@ const theme = {
 
     container: {
 
-      width: "220px",
+      width: "240px",
 
-      background: "#111827",
+      background:
+        "linear-gradient(180deg,#020617,#0F172A)",
 
       color: "white",
 
-      padding: "20px",
+      padding: "24px",
 
       display: "flex",
 
@@ -62,21 +66,32 @@ const theme = {
 
       gap: "20px",
 
+      borderRight:
+        "1px solid rgba(255,255,255,0.06)",
+
+      boxShadow:
+        "0 0 30px rgba(0,0,0,0.25)",
+
     },
 
     link: {
 
-      color: "white",
+      color: "#E2E8F0",
 
       textDecoration: "none",
 
-      padding: "12px",
+      padding: "14px 16px",
 
-      borderRadius: "10px",
+      borderRadius: "16px",
 
-      background: "#1f2937",
+      background: "rgba(255,255,255,0.04)",
 
-      fontWeight: "bold",
+      fontWeight: "700",
+
+      transition: "0.3s",
+
+      border:
+        "1px solid rgba(255,255,255,0.04)",
 
     },
 
@@ -84,15 +99,19 @@ const theme = {
 
   card: {
 
-    background: "white",
+    background: "#FFFFFF",
 
-    borderRadius: "18px",
+    borderRadius: "28px",
 
-    padding: "20px",
+    padding: "24px",
 
-    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+    boxShadow:
+      "0 10px 30px rgba(15,23,42,0.08)",
 
-    marginBottom: "20px",
+    border:
+      "1px solid #E2E8F0",
+
+    marginBottom: "24px",
 
   },
 
@@ -100,55 +119,79 @@ const theme = {
 
     primary: {
 
-      padding: "12px 18px",
+      padding: "14px 22px",
 
-      background: "#06b6d4",
+      background:
+        "linear-gradient(135deg,#06B6D4,#2563EB)",
 
       color: "white",
 
       border: "none",
 
-      borderRadius: "12px",
+      borderRadius: "18px",
 
       cursor: "pointer",
 
-      fontWeight: "bold",
+      fontWeight: "800",
+
+      fontSize: "15px",
+
+      boxShadow:
+        "0 8px 20px rgba(37,99,235,0.25)",
+
+      transition: "0.3s",
 
     },
 
     success: {
 
-      padding: "12px 18px",
+      padding: "14px 22px",
 
-      background: "#22c55e",
+      background:
+        "linear-gradient(135deg,#22C55E,#16A34A)",
 
       color: "white",
 
       border: "none",
 
-      borderRadius: "12px",
+      borderRadius: "18px",
 
       cursor: "pointer",
 
-      fontWeight: "bold",
+      fontWeight: "800",
+
+      fontSize: "15px",
+
+      boxShadow:
+        "0 8px 20px rgba(34,197,94,0.25)",
+
+      transition: "0.3s",
 
     },
 
     danger: {
 
-      padding: "12px 18px",
+      padding: "14px 22px",
 
-      background: "#ef4444",
+      background:
+        "linear-gradient(135deg,#EF4444,#DC2626)",
 
       color: "white",
 
       border: "none",
 
-      borderRadius: "12px",
+      borderRadius: "18px",
 
       cursor: "pointer",
 
-      fontWeight: "bold",
+      fontWeight: "800",
+
+      fontSize: "15px",
+
+      boxShadow:
+        "0 8px 20px rgba(239,68,68,0.25)",
+
+      transition: "0.3s",
 
     },
 
@@ -158,29 +201,42 @@ const theme = {
 
     width: "100%",
 
-    padding: "12px",
+    padding: "16px",
 
-    borderRadius: "10px",
+    borderRadius: "18px",
 
-    border: "1px solid #d1d5db",
+    border: "1px solid #CBD5E1",
 
-    marginTop: "6px",
+    marginTop: "8px",
 
-    marginBottom: "14px",
+    marginBottom: "16px",
 
     boxSizing: "border-box",
+
+    background: "#FFFFFF",
+
+    fontSize: "15px",
+
+    outline: "none",
+
+    transition: "0.3s",
+
+    boxShadow:
+      "0 2px 10px rgba(0,0,0,0.03)",
 
   },
 
   title: {
 
-    fontSize: "28px",
+    fontSize: "32px",
 
-    fontWeight: "bold",
+    fontWeight: "900",
 
-    color: "#111827",
+    color: "#0F172A",
 
-    marginBottom: "20px",
+    marginBottom: "24px",
+
+    letterSpacing: "-0.5px",
 
   },
 
@@ -188,49 +244,58 @@ const theme = {
 
     success: {
 
-      background: "#dcfce7",
+      background: "#DCFCE7",
 
       color: "#166534",
 
-      padding: "14px",
+      padding: "16px",
 
-      borderRadius: "12px",
+      borderRadius: "18px",
 
-      fontWeight: "bold",
+      fontWeight: "800",
 
       marginBottom: "20px",
+
+      border:
+        "1px solid #BBF7D0",
 
     },
 
     error: {
 
-      background: "#fee2e2",
+      background: "#FEE2E2",
 
-      color: "#991b1b",
+      color: "#991B1B",
 
-      padding: "14px",
+      padding: "16px",
 
-      borderRadius: "12px",
+      borderRadius: "18px",
 
-      fontWeight: "bold",
+      fontWeight: "800",
 
       marginBottom: "20px",
+
+      border:
+        "1px solid #FECACA",
 
     },
 
     warning: {
 
-      background: "#fef3c7",
+      background: "#FEF3C7",
 
-      color: "#92400e",
+      color: "#92400E",
 
-      padding: "14px",
+      padding: "16px",
 
-      borderRadius: "12px",
+      borderRadius: "18px",
 
-      fontWeight: "bold",
+      fontWeight: "800",
 
       marginBottom: "20px",
+
+      border:
+        "1px solid #FDE68A",
 
     },
 

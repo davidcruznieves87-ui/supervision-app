@@ -3,9 +3,10 @@ from "../styles/theme";
 import {
   eliminarSupervisionDB,
 } from "../services/supervisionesService";
+
 import {
   generarPDFSupervision,
-} from "../utils/pdfGenerator";
+} from "../utils/pdf/pdfSupervision";
 
 import logo
 from "../logo.png";
@@ -46,27 +47,31 @@ export default function HistorialPage() {
   }, []);
 
   // 🔥 PDF
-  const generarPDF =
-    (s) => {
+ const generarPDF =
+  async (s) => {
 
-      generarPDFSupervision({
+    await generarPDFSupervision({
 
-        logo,
+      folio:
+        s.folio,
 
-        folio:
-          s.folio,
+      sitio:
+        s.sitio,
 
-        sitio:
-          s.sitio,
+      tecnico:
+        s.tecnico,
 
-        tecnico:
-          s.tecnico,
+      supervisor:
+        s.supervisor,
 
-        fallas:
-          s.fallas || [],
+      fechaHora:
+        s.fechaHora,
 
-      });
-    };
+      fallas:
+        s.fallas || [],
+
+    });
+  };
 
     const eliminarSupervision =
   async (id) => {

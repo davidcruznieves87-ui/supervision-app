@@ -2,22 +2,47 @@ import { useState } from "react";
 
 import theme from "../styles/theme";
 
-import GestionTecnicos from "../components/GestionTecnicos";
-
 import GestionSitios from "../components/GestionSitios";
 
 import GestionUsuarios from "../components/GestionUsuarios";
 
-export default function AdminPage({
+function AdminPage({
+
+  usuario,
+
   supervisor,
+
+  rol,
+
   tecnicos,
+
   sitios,
-  cargarTecnicos,
+
   cargarSitios,
+
+  cargarTecnicos,
+
 }) {
 
-  const [seccion, setSeccion] =
-    useState("tecnicos");
+  const [
+    seccion,
+    setSeccion,
+  ] = useState("sitios");
+
+  // 🔥 NORMALIZAR ROL
+  const rolNormalizado =
+    (
+      rol ||
+      usuario?.rol ||
+      ""
+    )
+      .toLowerCase()
+      .trim()
+      .normalize("NFD")
+      .replace(
+        /[\u0300-\u036f]/g,
+        ""
+      );
 
   return (
 
@@ -29,215 +54,156 @@ export default function AdminPage({
         <div
           style={{
             ...theme.card,
-            marginBottom: "25px",
+            marginBottom: 25,
           }}
-          className="border border-gray-200"
         >
 
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+          <h1 style={theme.title}>
 
-            <div>
+            ⚙️ Panel Administrativo
 
-              <h1
-                style={{
-                  ...theme.title,
-                  marginBottom: "10px",
-                }}
-              >
+          </h1>
 
-                ⚙️ Panel Administrativo
+          <p
+            style={{
+              color:
+                theme.colors.textLight,
+            }}
+          >
 
-              </h1>
+            Gestión operativa del sistema
 
-              <p
-                style={{
-                  color:
-                    theme.colors
-                      .textLight,
-                }}
-                className="text-lg"
-              >
-
-                Gestión operativa del sistema
-
-              </p>
-
-            </div>
-
-            {/* STATS */}
-            <div className="flex flex-wrap gap-4">
-
-              {/* TECNICOS */}
-              <div className="bg-cyan-50 border border-cyan-200 rounded-2xl px-6 py-4 min-w-[140px]">
-
-                <p className="text-sm font-bold text-gray-500">
-
-                  TÉCNICOS
-
-                </p>
-
-                <p className="text-3xl font-black text-cyan-700">
-
-                  {tecnicos?.length || 0}
-
-                </p>
-
-              </div>
-
-              {/* SITIOS */}
-              <div className="bg-slate-100 border border-slate-200 rounded-2xl px-6 py-4 min-w-[140px]">
-
-                <p className="text-sm font-bold text-gray-500">
-
-                  SITIOS
-
-                </p>
-
-                <p className="text-3xl font-black text-slate-700">
-
-                  {sitios?.length || 0}
-
-                </p>
-
-              </div>
-
-            </div>
-
-          </div>
+          </p>
 
         </div>
 
         {/* MENU */}
-        <div className="flex flex-wrap gap-4 mb-8">
-
-          {/* TECNICOS */}
-          <button
-            onClick={() =>
-              setSeccion(
-                "tecnicos"
-              )
-            }
-            style={
-              seccion ===
-              "tecnicos"
-                ? theme.button.primary
-                : {
-                    ...theme.button.primary,
-                    background: "#e5e7eb",
-                    color: "#111827",
-                  }
-            }
-            className="hover:scale-105 transition-all duration-300 shadow-lg"
-          >
-
-            👨‍🔧 Técnicos
-
-          </button>
+        <div
+          className="flex gap-4 mb-8"
+        >
 
           {/* SITIOS */}
           <button
+
             onClick={() =>
               setSeccion(
                 "sitios"
               )
             }
+
             style={
-              seccion ===
-              "sitios"
-                ? theme.button.primary
-                : {
-                    ...theme.button.primary,
-                    background: "#e5e7eb",
-                    color: "#111827",
-                  }
+              theme.button.primary
             }
-            className="hover:scale-105 transition-all duration-300 shadow-lg"
+
           >
 
             📍 Sitios
 
           </button>
 
-          {/* USUARIOS */}
-          <button
-            onClick={() =>
-              setSeccion(
-                "usuarios"
-              )
-            }
-            style={
-              seccion ===
-              "usuarios"
-                ? theme.button.primary
-                : {
-                    ...theme.button.primary,
-                    background: "#e5e7eb",
-                    color: "#111827",
-                  }
-            }
-            className="hover:scale-105 transition-all duration-300 shadow-lg"
-          >
+          {/* 🔥 SOLO ADMIN/SUPERADMIN */}
+          {
+            (
+              rolNormalizado ===
+                "admin"
 
-            👨‍💼 Usuarios
+              ||
 
-          </button>
+              rolNormalizado ===
+                "superadmin"
+            )
+
+            && (
+
+              <button
+
+                onClick={() =>
+                  setSeccion(
+                    "usuarios"
+                  )
+                }
+
+                style={
+                  theme.button.primary
+                }
+
+              >
+
+                👨‍💼 Usuarios
+
+              </button>
+            )
+          }
 
         </div>
 
-        {/* CONTENIDO */}
-        <div>
+        {/* 🔥 CONTENIDO SITIOS */}
+        {
 
-          {/* TECNICOS */}
-          {seccion ===
-            "tecnicos" && (
+          seccion ===
+            "sitios"
 
-            <GestionTecnicos
-              supervisor={
-                supervisor
-              }
-              tecnicos={
-                tecnicos || []
-              }
-              cargarTecnicos={
-                cargarTecnicos
-              }
-            />
-
-          )}
-
-          {/* SITIOS */}
-          {seccion ===
-            "sitios" && (
+          && (
 
             <GestionSitios
+
               supervisor={
                 supervisor
               }
+
+              rol={
+                rolNormalizado
+              }
+
               tecnicos={
                 tecnicos || []
               }
+
               sitios={
                 sitios || []
               }
+
               cargarSitios={
                 cargarSitios
               }
+
+              cargarTecnicos={
+                cargarTecnicos
+              }
+
             />
+          )
+        }
 
-          )}
+        {/* 🔥 CONTENIDO USUARIOS */}
+        {
 
-          {/* USUARIOS */}
-          {seccion ===
-            "usuarios" && (
+          seccion ===
+            "usuarios"
+
+          &&
+
+          (
+            rolNormalizado ===
+              "admin"
+
+            ||
+
+            rolNormalizado ===
+              "superadmin"
+          )
+
+          && (
 
             <GestionUsuarios />
 
-          )}
-
-        </div>
+          )
+        }
 
       </div>
 
     </div>
   );
 }
+
+export default AdminPage;
