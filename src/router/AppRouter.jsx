@@ -8,6 +8,9 @@ import {
 // 🔥 LAYOUT
 import MainLayout from "../layouts/MainLayout";
 
+// 🔥 ROUTE
+import ProtectedRoute from "./ProtectedRoute";
+
 // 🔥 PAGINAS
 import DashboardPage from "../pages/DashboardPage";
 
@@ -17,6 +20,10 @@ import HistorialPage from "../pages/HistorialPage";
 
 import AdminPage from "../pages/AdminPage";
 
+import HistorialRotacionesPage from "../pages/HistorialRotacionesPage";
+
+import DashboardEjecutivoPage from "../pages/DashboardEjecutivoPage";
+
 import MantenimientoPage from "../pages/MantenimientoPage";
 
 import MantenimientoDashboard from "../pages/MantenimientoDashboard";
@@ -24,27 +31,6 @@ import MantenimientoDashboard from "../pages/MantenimientoDashboard";
 function AppRouter({
   usuario,
 }) {
-
-  // 🔥 NORMALIZAR ROL
-  const rol = (
-    usuario?.rol || ""
-  )
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(
-      /[\u0300-\u036f]/g,
-      ""
-    );
-
-  console.log(
-    "USUARIO APP ROUTER:",
-    usuario
-  );
-
-  console.log(
-    "ROL APP ROUTER:",
-    rol
-  );
 
   return (
 
@@ -56,292 +42,193 @@ function AppRouter({
 
         <Routes>
 
-          {/* 🔥 SUPERADMIN */}
-          {
-            rol === "superadmin"
+          {/* 🔥 DASHBOARD */}
+          <Route
+            path="/"
+            element={
 
-            && (
+              <ProtectedRoute
+                allowedRoles={[
+                  "supervisor",
+                  "admin",
+                  "superadmin",
+                ]}
+              >
 
-              <>
+                <DashboardPage />
 
-                <Route
-                  path="/"
-                  element={
-                    <DashboardPage />
-                  }
+              </ProtectedRoute>
+
+            }
+          />
+
+          {/* 🔥 SUPERVISIONES */}
+          <Route
+            path="/supervisiones"
+            element={
+
+              <ProtectedRoute
+                allowedRoles={[
+                  "supervisor",
+                  "superadmin",
+                ]}
+              >
+
+                <SupervisionesPage />
+
+              </ProtectedRoute>
+
+            }
+          />
+
+          {/* 🔥 HISTORIAL */}
+          <Route
+            path="/historial"
+            element={
+
+              <ProtectedRoute
+                allowedRoles={[
+                  "supervisor",
+                  "admin",
+                  "superadmin",
+                ]}
+              >
+
+                <HistorialPage
+                  usuario={usuario}
                 />
 
-                <Route
-                  path="/supervisiones"
-                  element={
-                    <SupervisionesPage />
-                  }
-                />
+              </ProtectedRoute>
 
-                <Route
-                  path="/historial"
-                  element={
-                    <HistorialPage
-                      usuario={usuario}
-                    />
-                  }
-                />
-
-                <Route
-                  path="/mantenimiento"
-                  element={
-                    <MantenimientoPage />
-                  }
-                />
-
-                <Route
-                  path="/dashboard-mantenimiento"
-                  element={
-                    <MantenimientoDashboard />
-                  }
-                />
-
-                <Route
-                  path="/admin"
-                  element={
-
-                    <AdminPage
-
-                      usuario={usuario}
-
-                      rol={rol}
-
-                      supervisor={
-                        usuario?.nombre || ""
-                      }
-
-                      tecnicos={
-                        usuario?.tecnicos || []
-                      }
-
-                      sitios={
-                        usuario?.sitios || []
-                      }
-
-                      cargarTecnicos={() => {}}
-
-                      cargarSitios={() => {}}
-
-                    />
-                  }
-                />
-
-                <Route
-                  path="*"
-                  element={
-                    <Navigate to="/" />
-                  }
-                />
-
-              </>
-            )
-          }
+            }
+          />
 
           {/* 🔥 ADMIN */}
-          {
-            rol === "admin"
+          <Route
+            path="/admin"
+            element={
 
-            && (
+              <ProtectedRoute
+                allowedRoles={[
+                  "supervisor",
+                  "admin",
+                  "superadmin",
+                ]}
+              >
 
-              <>
+                <AdminPage
 
-                <Route
-                  path="/"
-                  element={
-                    <DashboardPage />
+                  usuario={usuario}
+
+                  rol={
+                    usuario?.rol
                   }
+
+                  supervisor={
+                    usuario?.nombre || ""
+                  }
+
+                  tecnicos={
+                    usuario?.tecnicos || []
+                  }
+
+                  sitios={
+                    usuario?.sitios || []
+                  }
+
+                  cargarTecnicos={() => {}}
+
+                  cargarSitios={() => {}}
+
                 />
 
-                <Route
-                  path="/admin"
-                  element={
+              </ProtectedRoute>
 
-                    <AdminPage
+            }
+          />
 
-                      usuario={usuario}
+          {/* 🔥 MANTENIMIENTO */}
+          <Route
+            path="/mantenimiento"
+            element={
 
-                      rol={rol}
+              <ProtectedRoute
+                allowedRoles={[
+                  "tecnico",
+                  "superadmin",
+                ]}
+              >
 
-                      supervisor={
-                        usuario?.nombre || ""
-                      }
+                <MantenimientoPage />
 
-                      tecnicos={
-                        usuario?.tecnicos || []
-                      }
+              </ProtectedRoute>
 
-                      sitios={
-                        usuario?.sitios || []
-                      }
+            }
+          />
 
-                      cargarTecnicos={() => {}}
+          {/* 🔥 DASHBOARD MTTO */}
+          <Route
+            path="/dashboard-mantenimiento"
+            element={
 
-                      cargarSitios={() => {}}
+              <ProtectedRoute
+                allowedRoles={[
+                  "tecnico",
+                  "supervisor",
+                  "admin",
+                  "superadmin",
+                ]}
+              >
 
-                    />
-                  }
-                />
+                <MantenimientoDashboard />
 
-                <Route
-                  path="/historial"
-                  element={
-                    <HistorialPage
-                      usuario={usuario}
-                    />
-                  }
-                />
+              </ProtectedRoute>
 
-                <Route
-                  path="/dashboard-mantenimiento"
-                  element={
-                    <MantenimientoDashboard />
-                  }
-                />
+            }
+          />
+{/* 🔥 HISTORIAL ROTACIONES */}
+<Route
+  path="/historial-rotaciones"
+  element={
 
-                <Route
-                  path="*"
-                  element={
-                    <Navigate to="/" />
-                  }
-                />
+    <ProtectedRoute
+      allowedRoles={[
+        "supervisor",
+        "superadmin",
+      ]}
+    >
 
-              </>
-            )
-          }
+      <HistorialRotacionesPage />
 
-          {/* 🔥 SUPERVISOR */}
-          {
-            rol === "supervisor"
+    </ProtectedRoute>
 
-            && (
+  }
+/>
 
-              <>
+<Route
+  path="/dashboard-ejecutivo"
+  element={
 
-                <Route
-                  path="/"
-                  element={
-                    <DashboardPage />
-                  }
-                />
+    <ProtectedRoute
+      allowedRoles={[
+        "supervisor",
+        "admin",
+        "superadmin",
+      ]}
+    >
 
-                <Route
-                  path="/supervisiones"
-                  element={
-                    <SupervisionesPage />
-                  }
-                />
+      <DashboardEjecutivoPage />
 
-                <Route
-                  path="/historial"
-                  element={
-                    <HistorialPage
-                      usuario={usuario}
-                    />
-                  }
-                />
-
-                <Route
-                  path="/admin"
-                  element={
-
-                    <AdminPage
-
-                      usuario={usuario}
-
-                      rol={rol}
-
-                      supervisor={
-                        usuario?.nombre || ""
-                      }
-
-                      tecnicos={
-                        usuario?.tecnicos || []
-                      }
-
-                      sitios={
-                        usuario?.sitios || []
-                      }
-
-                      cargarTecnicos={() => {}}
-
-                      cargarSitios={() => {}}
-
-                    />
-                  }
-                />
-
-                <Route
-                  path="/dashboard-mantenimiento"
-                  element={
-                    <MantenimientoDashboard />
-                  }
-                />
-
-                <Route
-                  path="*"
-                  element={
-                    <Navigate to="/" />
-                  }
-                />
-
-              </>
-            )
-          }
-
-          {/* 🔥 TECNICO */}
-          {
-            rol === "tecnico"
-
-            && (
-
-              <>
-
-                <Route
-                  path="/mantenimiento"
-                  element={
-                    <MantenimientoPage />
-                  }
-                />
-
-                <Route
-                  path="/dashboard-mantenimiento"
-                  element={
-                    <MantenimientoDashboard />
-                  }
-                />
-
-                <Route
-                  path="*"
-                  element={
-                    <Navigate
-                      to="/mantenimiento"
-                    />
-                  }
-                />
-
-              </>
-            )
-          }
-
-          {/* 🔥 SIN ROL */}
-          {
-            !rol
-
-            && (
-
-              <Route
-                path="*"
-                element={
-                  <Navigate to="/" />
-                }
-              />
-            )
-          }
+    </ProtectedRoute>
+  }
+/>
+          {/* 🔥 FALLBACK */}
+          <Route
+            path="*"
+            element={
+              <Navigate to="/" />
+            }
+          />
 
         </Routes>
 

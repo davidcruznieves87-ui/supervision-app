@@ -8,19 +8,13 @@ export default function ProtectedRoute({
 
   children,
 
-  requireAdmin = false,
-
-  requireSuperAdmin = false,
+  allowedRoles = [],
 
 }) {
 
   const {
 
-    supervisor,
-
-    esAdmin,
-
-    esSuperAdmin,
+    usuario,
 
     loading,
 
@@ -41,24 +35,31 @@ export default function ProtectedRoute({
   }
 
   // 🔥 NO LOGUEADO
-  if (!supervisor) {
+  if (!usuario) {
 
     return <Navigate to="/" />;
   }
 
-  // 🔥 SOLO ADMIN
-  if (
-    requireAdmin &&
-    !esAdmin
-  ) {
+  // 🔥 NORMALIZAR ROL
+  const rol = (
+    usuario?.rol || ""
+  )
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(
+      /[\u0300-\u036f]/g,
+      ""
+    );
 
-    return <Navigate to="/" />;
-  }
-
-  // 🔥 SOLO SUPERADMIN
+  // 🔥 VALIDAR ROLES
   if (
-    requireSuperAdmin &&
-    !esSuperAdmin
+
+    allowedRoles.length > 0 &&
+
+    !allowedRoles.includes(
+      rol
+    )
+
   ) {
 
     return <Navigate to="/" />;

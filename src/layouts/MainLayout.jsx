@@ -78,6 +78,10 @@ if (rol === "superadmin") {
       nombre: "👨‍💼 Administración",
       ruta: "/admin",
     },
+{
+  nombre: "📊 Dashboard Ejecutivo",
+  ruta: "/dashboard-ejecutivo",
+},
 
   ];
 }
@@ -101,17 +105,23 @@ else if (rol === "supervisor") {
       nombre: "📁 Historial",
       ruta: "/historial",
     },
-
+{
+  nombre: "🔄 Rotaciones",
+  ruta: "/historial-rotaciones",
+},
     {
       nombre: "👨‍💼 Administración",
       ruta: "/admin",
     },
 
     {
-      nombre: "📈 Dashboard Operativo",
+      nombre: "📈 Mantenimientos Realizados",
       ruta: "/dashboard-mantenimiento",
     },
-
+{
+  nombre: "📊 Dashboard Ejecutivo",
+  ruta: "/dashboard-ejecutivo",
+},
   ];
 }
 
@@ -139,7 +149,10 @@ else if (rol === "supervisor") {
       nombre: "📈 Dashboard General",
       ruta: "/dashboard-mantenimiento",
     },
-
+{
+  nombre: "📊 Dashboard Ejecutivo",
+  ruta: "/dashboard-ejecutivo",
+},
   ];
 }
 

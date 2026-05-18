@@ -1,16 +1,9 @@
-
 import {
-
   collection,
-
   addDoc,
-
   getDocs,
-
   deleteDoc,
-
   doc,
-
 } from "firebase/firestore";
 
 import { db } from "../firebase";
@@ -21,35 +14,82 @@ export const obtenerSupervisiones =
 
     try {
 
-      const querySnapshot =
+      const snapshot =
         await getDocs(
+
           collection(
             db,
             "supervisiones"
           )
         );
 
-      const datos = [];
+      const supervisiones =
+        snapshot.docs.map(
+          (doc) => {
 
-      querySnapshot.forEach((d) => {
+            const data =
+              doc.data();
 
-        datos.push({
-          id: d.id,
-          ...d.data(),
-        });
+            return {
 
-      });
+              id: doc.id,
 
-      return datos;
+              folio:
+                data?.folio || "",
+
+              supervisor:
+                data?.supervisor || "",
+
+              sitio:
+                data?.sitio || "",
+
+              tecnico:
+                data?.tecnico || "",
+
+              fechaHora:
+                data?.fechaHora || null,
+
+              fallas:
+                Array.isArray(
+                  data?.fallas
+                )
+
+                  ? data.fallas
+
+                  : [],
+
+            };
+          }
+        );
+
+      // 🔥 ORDENAR NUEVAS PRIMERO
+      supervisiones.sort(
+        (a, b) => {
+
+          const fechaA =
+
+            a?.fechaHora?.seconds || 0;
+
+          const fechaB =
+
+            b?.fechaHora?.seconds || 0;
+
+          return fechaB - fechaA;
+        }
+      );
+
+      return supervisiones;
 
     } catch (error) {
 
-      console.log(error);
+      console.log(
+        "ERROR SUPERVISIONES:",
+        error
+      );
 
       return [];
     }
   };
-
 // 🔥 GUARDAR
 export const guardarSupervisionDB =
   async (supervision) => {
@@ -80,7 +120,17 @@ export const eliminarSupervisionDB =
 
     try {
 
+      if (!id) {
+
+        console.log(
+          "ID inválido"
+        );
+
+        return false;
+      }
+
       await deleteDoc(
+
         doc(
           db,
           "supervisiones",
@@ -92,7 +142,10 @@ export const eliminarSupervisionDB =
 
     } catch (error) {
 
-      console.log(error);
+      console.log(
+        "ERROR ELIMINANDO:",
+        error
+      );
 
       return false;
     }

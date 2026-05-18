@@ -106,7 +106,20 @@ function Historial({
                   marginBottom: "5px",
                 }}>
 
-                  🕒 {s.fechaHora}
+                  🕒{
+  s?.fechaHora?.seconds
+
+    ? new Date(
+        s.fechaHora.seconds * 1000
+      ).toLocaleString()
+
+    : typeof s?.fechaHora ===
+      "string"
+
+    ? s.fechaHora
+
+    : "Sin fecha"
+}
 
                 </p>
 

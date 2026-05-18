@@ -2,7 +2,12 @@ import {
   useState,
   useEffect,
 } from "react";
-
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
 import {
   subirImagenOptimizada,
 } from "../services/imagenesService";
@@ -21,24 +26,24 @@ import {
 import SupervisionForm
 from "../components/SupervisionForm";
 
-import {
-  obtenerTecnicos,
-} from "../services/tecnicosService";
-
 import useAuth
 from "../hooks/useAuth";
 
 import {
   useSupervision,
 } from "../context/SupervisionContext";
-
+import {
+  db,
+} from "../firebase";
 export default function SupervisionesPage() {
 
   // 🔥 AUTH
-  const {
-    supervisor,
-  } = useAuth();
+ const {
+  usuario,
+} = useAuth();
 
+const supervisor =
+  usuario?.nombre || "";
   // 🔥 CONTEXT
   const {
 
@@ -89,17 +94,79 @@ export default function SupervisionesPage() {
     setSitiosFiltrados,
   ] = useState([]);
 
-  // 🔥 CARGAR TÉCNICOS
-  const cargarTecnicos =
-    async () => {
+ 
+// 🔥 CARGAR TÉCNICOS
+const cargarTecnicos =
+  async () => {
 
-      const datos =
-        await obtenerTecnicos(
-          supervisor
+    try {
+
+      const snapshot =
+        await getDocs(
+
+          collection(
+            db,
+            "usuarios"
+          )
         );
 
-      setTecnicos(datos);
-    };
+      // 🔥 NORMALIZAR ROLES
+      const lista =
+        snapshot.docs
+
+          .map((d) => ({
+
+            id: d.id,
+
+            ...d.data(),
+
+            // 🔥 ASEGURAR ARRAY
+            sitiosAsignados:
+              d.data()
+                ?.sitiosAsignados || [],
+
+          }))
+
+          .filter((u) => {
+
+            const rol = (
+              u?.rol || ""
+            )
+
+              .toLowerCase()
+
+              .trim()
+
+              .normalize("NFD")
+
+              .replace(
+                /[\u0300-\u036f]/g,
+                ""
+              );
+
+            return (
+              rol === "tecnico"
+            );
+          });
+
+      // 🔥 DEBUG
+      console.log(
+        "TECNICOS CARGADOS:",
+        lista
+      );
+
+      setTecnicos(
+        lista
+      );
+
+    } catch (error) {
+
+      console.log(
+        "ERROR CARGANDO TECNICOS:",
+        error
+      );
+    }
+  };
 
   // 🔥 INIT
   useEffect(() => {
@@ -327,8 +394,7 @@ export default function SupervisionesPage() {
         tecnico,
 
         fechaHora:
-          new Date()
-            .toLocaleString(),
+  new Date(),
 
         fallas: fallas.map(
           (falla) => ({

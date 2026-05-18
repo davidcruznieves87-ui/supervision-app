@@ -8,10 +8,8 @@ import {
 } from "firebase/auth";
 
 import {
-  collection,
-  getDocs,
-  query,
-  where,
+  doc,
+  getDoc,
 } from "firebase/firestore";
 
 import {
@@ -22,24 +20,9 @@ import {
 export default function useAuth() {
 
   const [
-    supervisor,
-    setSupervisor,
-  ] = useState("");
-
-  const [
-    rol,
-    setRol,
-  ] = useState("");
-
-  const [
-    esAdmin,
-    setEsAdmin,
-  ] = useState(false);
-
-  const [
-    esSuperAdmin,
-    setEsSuperAdmin,
-  ] = useState(false);
+    usuario,
+    setUsuario,
+  ] = useState(null);
 
   const [
     loading,
@@ -49,91 +32,78 @@ export default function useAuth() {
   useEffect(() => {
 
     const unsubscribe =
+
       onAuthStateChanged(
+
         auth,
+
         async (user) => {
 
-          if (user) {
+          try {
 
-            setSupervisor(
-              user.email
-            );
+            // 🔥 NO LOGUEADO
+            if (!user) {
 
-            try {
+              setUsuario(null);
 
-              // 🔥 BUSCAR USUARIO
-              const q = query(
-                collection(
-                  db,
-                  "usuarios"
-                ),
-                where(
-                  "correo",
-                  "==",
-                  user.email
-                )
-              );
+              setLoading(false);
 
-              const snapshot =
-                await getDocs(q);
-
-              if (
-                !snapshot.empty
-              ) {
-
-                const datos =
-                  snapshot.docs[0].data();
-
-                setRol(
-                  datos.rol
-                );
-
-                // 🔥 ADMIN
-                setEsAdmin(
-                  datos.rol ===
-                    "admin" ||
-                  datos.rol ===
-                    "superadmin"
-                );
-
-                // 🔥 SUPERADMIN
-                setEsSuperAdmin(
-                  datos.rol ===
-                    "superadmin"
-                );
-
-              } else {
-
-                setRol(
-                  "supervisor"
-                );
-
-                setEsAdmin(false);
-
-                setEsSuperAdmin(
-                  false
-                );
-              }
-
-            } catch (error) {
-
-              console.log(error);
+              return;
             }
 
-          } else {
-
-            setSupervisor("");
-
-            setRol("");
-
-            setEsAdmin(false);
-
-            setEsSuperAdmin(
-              false
+            // 🔥 BUSCAR USUARIO FIRESTORE
+            const ref = doc(
+              db,
+              "usuarios",
+              user.uid
             );
-          }
 
-          setLoading(false);
+            const snap =
+              await getDoc(ref);
+
+            // 🔥 EXISTE
+            if (snap.exists()) {
+
+              const datos =
+                snap.data();
+
+              setUsuario({
+
+                uid: user.uid,
+
+                email: user.email,
+
+                ...datos,
+
+              });
+
+            } else {
+
+              // 🔥 FALLBACK
+              setUsuario({
+
+                uid: user.uid,
+
+                email: user.email,
+
+                rol: "supervisor",
+
+              });
+            }
+
+          } catch (error) {
+
+            console.error(
+              "ERROR AUTH:",
+              error
+            );
+
+            setUsuario(null);
+
+          } finally {
+
+            setLoading(false);
+          }
         }
       );
 
@@ -143,13 +113,7 @@ export default function useAuth() {
 
   return {
 
-    supervisor,
-
-    rol,
-
-    esAdmin,
-
-    esSuperAdmin,
+    usuario,
 
     loading,
 

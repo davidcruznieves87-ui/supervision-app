@@ -15,32 +15,36 @@ import {
 
 import { db } from "../firebase";
 
-import {
-  obtenerTecnicos,
-} from "../services/tecnicosService";
-
 import theme from "../styles/theme";
 
 function GestionSitios({
   supervisor,
 }) {
 
-  const [nuevoSitio, setNuevoSitio] =
-    useState("");
+  const [
+    nuevoSitio,
+    setNuevoSitio,
+  ] = useState("");
 
   const [
     tecnicoSeleccionado,
     setTecnicoSeleccionado,
   ] = useState("");
 
-  const [mensaje, setMensaje] =
-    useState("");
+  const [
+    mensaje,
+    setMensaje,
+  ] = useState("");
 
-  const [tipoMensaje, setTipoMensaje] =
-    useState("");
+  const [
+    tipoMensaje,
+    setTipoMensaje,
+  ] = useState("");
 
-  const [loading, setLoading] =
-    useState(false);
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
 
   const [
     tecnicosDB,
@@ -53,13 +57,36 @@ function GestionSitios({
 
       try {
 
-        const data =
-          await obtenerTecnicos(
-            supervisor
+        const q = query(
+
+          collection(
+            db,
+            "usuarios"
+          ),
+
+          where(
+            "rol",
+            "==",
+            "tecnico"
+          )
+        );
+
+        const snapshot =
+          await getDocs(q);
+
+        const tecnicos =
+          snapshot.docs.map(
+            (d) => ({
+
+              id: d.id,
+
+              ...d.data(),
+
+            })
           );
 
         setTecnicosDB(
-          data || []
+          tecnicos || []
         );
 
       } catch (error) {
@@ -117,7 +144,7 @@ function GestionSitios({
 
         setLoading(true);
 
-        // 🔥 LEGACY
+        // 🔥 LEGACY SITIOS
         await addDoc(
 
           collection(
@@ -145,13 +172,19 @@ function GestionSitios({
 
           collection(
             db,
-            "tecnicos"
+            "usuarios"
           ),
 
           where(
             "nombre",
             "==",
             tecnicoSeleccionado
+          ),
+
+          where(
+            "rol",
+            "==",
+            "tecnico"
           )
         );
 
@@ -164,11 +197,34 @@ function GestionSitios({
           const tecnicoData =
             d.data();
 
+          const sitiosActuales =
+
+            tecnicoData
+              ?.sitiosAsignados || [];
+
+          // 🔥 EVITAR DUPLICADOS
+          if (
+            sitiosActuales.includes(
+              nuevoSitio.trim()
+            )
+          ) {
+
+            mostrarMensaje(
+              "⚠️ El sitio ya está asignado",
+              "warning"
+            );
+
+            setLoading(false);
+
+            return;
+          }
+
+          // 🔥 ACTUALIZAR
           await updateDoc(
 
             doc(
               db,
-              "tecnicos",
+              "usuarios",
               d.id
             ),
 
@@ -176,11 +232,46 @@ function GestionSitios({
 
               sitiosAsignados: [
 
-                ...(tecnicoData
-                  ?.sitiosAsignados || []),
+                ...sitiosActuales,
 
                 nuevoSitio.trim(),
               ],
+            }
+          );
+
+          // 🔥 HISTORIAL ROTACION
+          await addDoc(
+
+            collection(
+              db,
+              "rotaciones"
+            ),
+
+            {
+
+              tecnicoId:
+                d.id,
+
+              tecnicoNombre:
+                tecnicoData.nombre,
+
+              sitio:
+                nuevoSitio.trim(),
+
+              accion:
+                "asignado",
+
+              supervisor,
+
+              usuarioMovimiento:
+                supervisor,
+
+              fecha:
+                new Date(),
+
+              motivo:
+                "Asignación de sitio",
+
             }
           );
         }
@@ -231,13 +322,19 @@ function GestionSitios({
 
           collection(
             db,
-            "tecnicos"
+            "usuarios"
           ),
 
           where(
             "nombre",
             "==",
             tecnicoNombre
+          ),
+
+          where(
+            "rol",
+            "==",
+            "tecnico"
           )
         );
 
@@ -249,11 +346,12 @@ function GestionSitios({
           const tecnicoData =
             d.data();
 
+          // 🔥 ACTUALIZAR
           await updateDoc(
 
             doc(
               db,
-              "tecnicos",
+              "usuarios",
               d.id
             ),
 
@@ -269,6 +367,42 @@ function GestionSitios({
                     s !==
                     sitioEliminar
                 ),
+            }
+          );
+
+          // 🔥 HISTORIAL ROTACION
+          await addDoc(
+
+            collection(
+              db,
+              "rotaciones"
+            ),
+
+            {
+
+              tecnicoId:
+                d.id,
+
+              tecnicoNombre:
+                tecnicoData.nombre,
+
+              sitio:
+                sitioEliminar,
+
+              accion:
+                "removido",
+
+              supervisor,
+
+              usuarioMovimiento:
+                supervisor,
+
+              fecha:
+                new Date(),
+
+              motivo:
+                "Eliminación de sitio",
+
             }
           );
         }
@@ -604,7 +738,6 @@ function GestionSitios({
                       {/* INFO */}
                       <div className="flex items-center gap-4">
 
-                        {/* AVATAR */}
                         <div
                           className="
                             w-16
@@ -623,7 +756,6 @@ function GestionSitios({
 
                         </div>
 
-                        {/* DATOS */}
                         <div>
 
                           <h3 className="text-3xl font-black text-cyan-700">
@@ -792,5 +924,4 @@ function GestionSitios({
     </div>
   );
 }
-
 export default GestionSitios;
