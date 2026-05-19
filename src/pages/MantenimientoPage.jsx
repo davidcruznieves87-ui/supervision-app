@@ -47,8 +47,11 @@ const convertirPreview =
 
 export default function MantenimientoPage() {
 
-  const { supervisor } =
-    useAuth();
+  const { usuario } =
+  useAuth();
+
+const supervisor =
+  usuario?.nombre || "";
 
   const pdfRef =
     useRef();
@@ -228,11 +231,21 @@ const datosGuardados =
     const nuevas = [
       ...maquinas,
       {
-        vlt: "",
-        comentario: "",
-        antes: null,
-        despues: null,
-      },
+  vlt: "",
+  comentario: "",
+
+  antes: {
+    file: null,
+    preview: "",
+    url: "",
+  },
+
+  despues: {
+    file: null,
+    preview: "",
+    url: "",
+  },
+}
     ];
 
     setMaquinas(nuevas);
@@ -279,13 +292,23 @@ const datosGuardados =
     setSitio("");
 
     setMaquinas([
-      {
-        vlt: "",
-        comentario: "",
-        antes: null,
-        despues: null,
-      },
-    ]);
+  {
+    vlt: "",
+    comentario: "",
+
+    antes: {
+      file: null,
+      preview: "",
+      url: "",
+    },
+
+    despues: {
+      file: null,
+      preview: "",
+      url: "",
+    },
+  },
+]);
 
     setMaquinaActiva(0);
 
@@ -322,7 +345,23 @@ const datosGuardados =
           hora:
             horaActual,
 
-          maquinas,
+          maquinas: maquinas.map(
+  (maquina) => ({
+
+    vlt:
+      maquina.vlt || "",
+
+    comentario:
+      maquina.comentario || "",
+
+    antes:
+      maquina.antes?.url || "",
+
+    despues:
+      maquina.despues?.url || "",
+
+  })
+),
 
           totalMaquinas:
             maquinas.length,
