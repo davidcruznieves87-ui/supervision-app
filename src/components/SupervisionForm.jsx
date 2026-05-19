@@ -13,6 +13,8 @@ function SupervisionForm({
   setUrgencia,
   imagen,
   setImagen,
+  imagenPreview,
+setImagenPreview,
   agregarFalla,
   guardarSupervision,
   descargarPDF,
@@ -135,49 +137,73 @@ function SupervisionForm({
 
       </div>
 
-      {/* IMAGEN */}
-      <div
+     {/* IMAGEN */}
+<div
+  style={{
+    marginBottom: "20px",
+  }}
+>
+
+  <input
+    ref={fileInputRef}
+    type="file"
+    accept="image/*"
+    capture="environment"
+    onChange={(e) => {
+
+      const file =
+        e.target.files?.[0];
+
+      if (!file) return;
+
+      setImagen(file);
+
+      const reader =
+        new FileReader();
+
+      reader.onload = () => {
+
+        setImagenPreview(
+          reader.result
+        );
+
+      };
+
+      reader.readAsDataURL(file);
+
+    }}
+    style={theme.input}
+  />
+
+  {imagenPreview && (
+
+    <div
+      style={{
+        marginTop: "15px",
+      }}
+    >
+
+      <img
+        src={imagenPreview}
+        alt="preview"
+        loading="lazy"
         style={{
-          marginBottom: "20px",
+          width: "180px",
+          borderRadius: "12px",
+          objectFit: "cover",
+          aspectRatio: "4 / 3",
+          border:
+            `1px solid ${theme.colors.border}`,
+          boxShadow:
+            "0 2px 8px rgba(0,0,0,0.15)",
         }}
-      >
+      />
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={(e) =>
-            setImagen(e.target.files[0])
-          }
-          style={theme.input}
-        />
+    </div>
 
-        {imagen && (
-          <div
-            style={{
-              marginTop: "15px",
-            }}
-          >
+  )}
 
-            <img
-              src={URL.createObjectURL(imagen)}
-              alt="preview"
-              loading="lazy"
-              style={{
-                width: "180px",
-                borderRadius: "12px",
-                objectFit: "cover",
-                aspectRatio: "4 / 3",
-                border: `1px solid ${theme.colors.border}`,
-                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-              }}
-            />
-
-          </div>
-        )}
-
-      </div>
+</div>
 
       {/* BOTÓN */}
       <div

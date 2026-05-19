@@ -71,6 +71,16 @@ const supervisor =
   const [imagen, setImagen] =
     useState(null);
 
+    const [
+  imagenPreview,
+  setImagenPreview,
+] = useState("");
+
+const [
+  restaurandoBorrador,
+  setRestaurandoBorrador,
+] = useState(true);
+
   const [mensaje, setMensaje] =
     useState("");
 
@@ -79,10 +89,48 @@ const supervisor =
       Date.now()
     );
 
-  const [online] =
-    useState(
-      navigator.onLine
+  const [
+  online,
+  setOnline,
+] = useState(
+  navigator.onLine
+);
+
+useEffect(() => {
+
+  const updateOnlineStatus =
+    () => {
+
+      setOnline(
+        navigator.onLine
+      );
+    };
+
+  window.addEventListener(
+    "online",
+    updateOnlineStatus
+  );
+
+  window.addEventListener(
+    "offline",
+    updateOnlineStatus
+  );
+
+  return () => {
+
+    window.removeEventListener(
+      "online",
+      updateOnlineStatus
     );
+
+    window.removeEventListener(
+      "offline",
+      updateOnlineStatus
+    );
+
+  };
+
+}, []);
 
   const [
     tecnicos,
@@ -177,47 +225,160 @@ const cargarTecnicos =
 
   }, [supervisor]);
 
-  // 🔥 RESTAURAR BORRADOR
-  useEffect(() => {
+ 
+// 🔥 RESTAURAR BORRADOR
+useEffect(() => {
 
-    const borrador =
-      localStorage.getItem(
-        "supervision_borrador"
-      );
+  const borrador =
+    localStorage.getItem(
+      "supervision_borrador"
+    );
 
-    if (!borrador) return;
+  if (!borrador) {
 
-    try {
+    setRestaurandoBorrador(false);
 
-      const data =
-        JSON.parse(borrador);
+    return;
+  }
 
-      setSitio(
-        data.sitio || ""
-      );
+  try {
 
-      setTecnico(
-        data.tecnico || ""
-      );
-
-      setFallas(
-        data.fallas || []
-      );
-
-    } catch (error) {
+    const data =
+      JSON.parse(borrador);
 
       console.log(
-        "Error restaurando borrador:",
-        error
-      );
-    }
+  "📦 BORRADOR RESTAURADO",
+  data
+);
 
-  }, []);
+    setSitio(
+      data.sitio || ""
+    );
+
+    setTecnico(
+      data.tecnico || ""
+    );
+
+    setFallas(
+      data.fallas || []
+    );
+
+    setFalla(
+      data.falla || ""
+    );
+
+    setVlt(
+      data.vlt || ""
+    );
+
+    setUrgencia(
+      data.urgencia || "Baja"
+    );
+
+    setImagenPreview(
+  data.imagenPreview || ""
+);
+
+  } catch (error) {
+
+    console.log(
+      "Error restaurando borrador:",
+      error
+    );
+
+  } finally {
+
+    setTimeout(() => {
+
+      setRestaurandoBorrador(
+        false
+      );
+
+    }, 100);
+  }
+
+}, []);
+
+// 🔥 AUTOGUARDADO ENTERPRISE
+// 🔥 AUTOGUARDADO ENTERPRISE
+useEffect(() => {
+
+  // 🔥 NO GUARDAR
+  // MIENTRAS RESTAURA
+  if (
+    restaurandoBorrador
+  ) return;
+
+  try {
+
+    const borrador = {
+
+      sitio,
+      tecnico,
+      fallas,
+
+      falla,
+      vlt,
+      urgencia,
+      imagenPreview,
+
+    };
+
+    localStorage.setItem(
+
+      "supervision_borrador",
+
+      JSON.stringify(
+        borrador
+      )
+
+    );
+
+    console.log(
+      "💾 BORRADOR GUARDADO"
+    );
+
+  } catch (error) {
+
+    console.log(
+      "Error guardando borrador:",
+      error
+    );
+  }
+
+}, [
+
+  restaurandoBorrador,
+
+  sitio,
+  tecnico,
+  fallas,
+
+  falla,
+  vlt,
+  urgencia,
+
+  imagenPreview,
+
+]);
+
+console.log(
+  "ESTADO ACTUAL:",
+  {
+    sitio,
+    tecnico,
+    fallas,
+  }
+);
+
 
   // 🔥 FILTRAR SITIOS
   useEffect(() => {
 
-    if (!tecnico) {
+    if (
+  !tecnico &&
+  !restaurandoBorrador
+) {
 
       setSitiosFiltrados([]);
 
@@ -334,20 +495,6 @@ const cargarTecnicos =
           nuevasFallas
         );
 
-        // 🔥 GUARDAR BORRADOR
-        localStorage.setItem(
-          "supervision_borrador",
-          JSON.stringify({
-
-            sitio,
-
-            tecnico,
-
-            fallas:
-              nuevasFallas,
-
-          })
-        );
 
         setFalla("");
 
@@ -356,6 +503,8 @@ const cargarTecnicos =
         setUrgencia("Baja");
 
         setImagen(null);
+
+        setImagenPreview("");
 
       } catch (error) {
 
@@ -577,6 +726,8 @@ const cargarTecnicos =
 
       setImagen(null);
 
+      setImagenPreview("");
+
       setMensaje(
         "🗑️ Formulario limpiado"
       );
@@ -626,11 +777,19 @@ const cargarTecnicos =
               setUrgencia
             }
 
-            imagen={imagen}
+        imagen={imagen}
 
-            setImagen={
-              setImagen
-            }
+setImagen={
+  setImagen
+}
+
+imagenPreview={
+  imagenPreview
+}
+
+setImagenPreview={
+  setImagenPreview
+}
 
             agregarFalla={
               agregarFalla

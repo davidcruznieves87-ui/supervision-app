@@ -19,6 +19,32 @@ import {
 
 import useAuth from "../hooks/useAuth";
 
+const convertirPreview =
+  (file) =>
+    new Promise(
+      (resolve, reject) => {
+
+        const reader =
+          new FileReader();
+
+        reader.onload = () => {
+
+          resolve(
+            reader.result
+          );
+
+        };
+
+        reader.onerror =
+          reject;
+
+        reader.readAsDataURL(
+          file
+        );
+
+      }
+    );
+
 export default function MantenimientoPage() {
 
   const { supervisor } =
@@ -36,13 +62,51 @@ export default function MantenimientoPage() {
   const horaActual =
     fecha.toLocaleTimeString();
 
+      const [
+  restaurandoDraft,
+  setRestaurandoDraft,
+] = useState(true);
+
+useEffect(() => {
+
+  setTimeout(() => {
+
+    setRestaurandoDraft(
+      false
+    );
+
+  }, 100);
+
+}, []);
+
   // 🔥 LOCAL STORAGE
-  const datosGuardados =
-    JSON.parse(
+ const cargarDraft = () => {
+
+  try {
+
+    const data =
       localStorage.getItem(
         "mantenimiento_temp"
-      )
+      );
+
+    return data
+      ? JSON.parse(data)
+      : null;
+
+  } catch (error) {
+
+    console.log(
+      "Error cargando draft:",
+      error
     );
+
+    return null;
+  }
+
+};
+
+const datosGuardados =
+  cargarDraft();
 
   // 🔥 STATES
   const [sitio, setSitio] =
@@ -56,13 +120,21 @@ export default function MantenimientoPage() {
     setMaquinas,
   ] = useState(
     datosGuardados?.maquinas || [
-      {
-        vlt: "",
-        comentario: "",
-        antes: null,
-        despues: null,
-      },
-    ]
+  {
+    vlt: "",
+    comentario: "",
+
+    antes: {
+      file: null,
+      preview: "",
+    },
+
+    despues: {
+      file: null,
+      preview: "",
+    },
+  },
+]
   );
 
   const [
@@ -72,19 +144,45 @@ export default function MantenimientoPage() {
 
   const [mensaje, setMensaje] =
     useState("");
+  
 
   // 🔥 LOCAL STORAGE
   useEffect(() => {
 
+  if (
+    restaurandoDraft
+  ) return;
+
+  try {
+
     localStorage.setItem(
+
       "mantenimiento_temp",
+
       JSON.stringify({
         sitio,
         maquinas,
       })
+
     );
 
-  }, [sitio, maquinas]);
+    console.log(
+      "💾 MTTO GUARDADO"
+    );
+
+  } catch (error) {
+
+    console.log(
+      "Error guardando MTTO:",
+      error
+    );
+  }
+
+}, [
+  restaurandoDraft,
+  sitio,
+  maquinas,
+]);
 
   // 🔥 MAQUINA ACTIVA
   const maquina =
@@ -443,14 +541,24 @@ export default function MantenimientoPage() {
             y + 45
           );
 
-          pdf.addImage(
-            maquina.antes.preview,
-            "JPEG",
-            15,
-            y + 50,
-            75,
-            40
-          );
+          const imagenAntes =
+
+  maquina.antes?.preview ||
+
+  maquina.antes?.url;
+
+if (imagenAntes) {
+
+  pdf.addImage(
+    imagenAntes,
+    "JPEG",
+    15,
+    y + 50,
+    75,
+    40
+  );
+
+}
         }
 
         if (
@@ -468,14 +576,24 @@ export default function MantenimientoPage() {
             y + 45
           );
 
-          pdf.addImage(
-            maquina.despues.preview,
-            "JPEG",
-            110,
-            y + 50,
-            75,
-            40
-          );
+          const imagenDespues =
+
+  maquina.despues?.preview ||
+
+  maquina.despues?.url;
+
+if (imagenDespues) {
+
+  pdf.addImage(
+    imagenDespues,
+    "JPEG",
+    110,
+    y + 50,
+    75,
+    40
+  );
+
+}
         }
 
         y += 110;
@@ -658,7 +776,12 @@ export default function MantenimientoPage() {
 
                     const file =
                       e.target.files[0];
+if (!file) return;
 
+const preview =
+  await convertirPreview(
+    file
+  );
                     if (!file)
                       return;
 
@@ -698,7 +821,7 @@ export default function MantenimientoPage() {
                         };
 
                       readerAntes.readAsDataURL(
-                        file
+                        file,preview
                       );
 
                     } catch (error) {
@@ -742,6 +865,12 @@ export default function MantenimientoPage() {
                     const file =
                       e.target.files[0];
 
+                      if (!file) return;
+
+const preview =
+  await convertirPreview(
+    file
+  );
                     if (!file)
                       return;
 
@@ -781,7 +910,7 @@ export default function MantenimientoPage() {
                         };
 
                       readerDespues.readAsDataURL(
-                        file
+                        file, preview,
                       );
 
                     } catch (error) {
