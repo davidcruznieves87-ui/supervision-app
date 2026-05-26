@@ -28,6 +28,8 @@ import MantenimientoPage from "../pages/MantenimientoPage";
 
 import MantenimientoDashboard from "../pages/MantenimientoDashboard";
 
+import ControlReportesPage from "../pages/ControlReportesPage";
+
 function AppRouter({
   usuario,
 }) {
@@ -165,7 +167,10 @@ function AppRouter({
 
             }
           />
-
+<Route
+  path="/control-reportes"
+  element={<ControlReportesPage />}
+/>
           {/* 🔥 DASHBOARD MTTO */}
           <Route
             path="/dashboard-mantenimiento"

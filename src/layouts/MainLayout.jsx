@@ -83,6 +83,11 @@ if (rol === "superadmin") {
   ruta: "/dashboard-ejecutivo",
 },
 
+{
+  nombre: "📦 Control Reportes",
+  ruta: "/control-reportes",
+},
+
   ];
 }
 
@@ -122,6 +127,11 @@ else if (rol === "supervisor") {
   nombre: "📊 Dashboard Ejecutivo",
   ruta: "/dashboard-ejecutivo",
 },
+
+{
+  nombre: "📦 Control Reportes",
+  ruta: "/control-reportes",
+},
   ];
 }
 
@@ -152,6 +162,11 @@ else if (rol === "supervisor") {
 {
   nombre: "📊 Dashboard Ejecutivo",
   ruta: "/dashboard-ejecutivo",
+},
+
+{
+  nombre: "📦 Control Reportes",
+  ruta: "/control-reportes",
 },
   ];
 }
