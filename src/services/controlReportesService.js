@@ -1,3 +1,4 @@
+
 import {
   doc,
   setDoc,
@@ -23,6 +24,24 @@ async (reportes) => {
 
     for (const item of reportes) {
 
+      // =====================
+      // VALIDAR
+      // =====================
+
+      if (
+        !item?.sala ||
+        !item?.fecha
+      ) {
+
+        console.warn(
+          "⚠️ Registro inválido:",
+          item
+        );
+
+        continue;
+
+      }
+
       const id =
         `${item.sala}_${item.fecha}`;
 
@@ -45,16 +64,24 @@ async (reportes) => {
         ...item,
 
         bingoCSV:
-          item.bingoCSV || false,
+          Boolean(
+            item.bingoCSV
+          ),
 
         bingoJSON:
-          item.bingoJSON || false,
+          Boolean(
+            item.bingoJSON
+          ),
 
         spinCSV:
-          item.spinCSV || false,
+          Boolean(
+            item.spinCSV
+          ),
 
         spinJSON:
-          item.spinJSON || false,
+          Boolean(
+            item.spinJSON
+          ),
 
       };
 
@@ -73,23 +100,40 @@ async (reportes) => {
 
           ...actual,
 
-          ...item,
+          // conservar datos existentes
+          sala:
+            actual.sala ||
+            item.sala,
+
+          fecha:
+            actual.fecha ||
+            item.fecha,
+
+          // merge incremental
 
           bingoCSV:
-            actual.bingoCSV ||
-            item.bingoCSV,
+            Boolean(
+              actual.bingoCSV ||
+              item.bingoCSV
+            ),
 
           bingoJSON:
-            actual.bingoJSON ||
-            item.bingoJSON,
+            Boolean(
+              actual.bingoJSON ||
+              item.bingoJSON
+            ),
 
           spinCSV:
-            actual.spinCSV ||
-            item.spinCSV,
+            Boolean(
+              actual.spinCSV ||
+              item.spinCSV
+            ),
 
           spinJSON:
-            actual.spinJSON ||
-            item.spinJSON,
+            Boolean(
+              actual.spinJSON ||
+              item.spinJSON
+            ),
 
         };
 
@@ -103,7 +147,9 @@ async (reportes) => {
 
       let total = 0;
 
+      // =====================
       // BINGO
+      // =====================
 
       if (
 
@@ -132,7 +178,9 @@ async (reportes) => {
 
       }
 
+      // =====================
       // SPIN
+      // =====================
 
       else if (
 
@@ -184,7 +232,9 @@ async (reportes) => {
       let estado =
         "❌ Faltante";
 
+      // =====================
       // COMPLETO
+      // =====================
 
       if (
         entregados === total &&
@@ -196,7 +246,9 @@ async (reportes) => {
 
       }
 
+      // =====================
       // PARCIAL
+      // =====================
 
       else if (
         entregados > 0
@@ -293,34 +345,34 @@ async (reportes) => {
 
           mes:
             item.fecha
-              .substring(
-                0,
-                7
-              )
-              .replace(
-                "-",
-                ""
-              ),
+              ? item.fecha
+                  .substring(0, 7)
+                  .replace("-", "")
+              : "",
 
           // YYYY
 
           año:
-            Number(
-              item.fecha.substring(
-                0,
-                4
-              )
-            ),
+            item.fecha
+              ? Number(
+                  item.fecha.substring(
+                    0,
+                    4
+                  )
+                )
+              : 0,
 
           // DD
 
           dia:
-            Number(
-              item.fecha.substring(
-                8,
-                10
-              )
-            ),
+            item.fecha
+              ? Number(
+                  item.fecha.substring(
+                    8,
+                    10
+                  )
+                )
+              : 0,
 
           fechaCarga:
             new Date(),
