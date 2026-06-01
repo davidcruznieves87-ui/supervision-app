@@ -1,3 +1,4 @@
+
 import {
   ZipReader,
   BlobReader,
@@ -39,32 +40,62 @@ export const procesarZIP =
         await reader.getEntries();
 
       // =====================
-      // RECORRER
+      // RECORRER ARCHIVOS
       // =====================
 
-      for (
-        const entry
-        of entries
-      ) {
+      for (const entry of entries) {
 
-        if (
-          entry.directory
-        ) {
+        // Ignorar carpetas
+        if (entry.directory) {
           continue;
         }
 
         const nombre =
-          entry.filename;
+          entry.filename.toLowerCase();
 
-        const parsed =
-          bingoParser(
+        // =====================
+        // SOLO JSON / CSV
+        // =====================
+
+        const esJSON =
+          nombre.endsWith(".json");
+
+        const esCSV =
+          nombre.endsWith(".csv") ||
+          nombre.endsWith(".csv.zip");
+
+        if (!esJSON && !esCSV) {
+          continue;
+        }
+
+        try {
+
+          console.log(
+            "📄 Archivo detectado:",
             nombre
           );
 
-        if (parsed) {
+          // =====================
+          // PARSEAR SOLO NOMBRE
+          // =====================
 
-          resultados.push(
-            parsed
+          const parsed =
+            bingoParser(nombre);
+
+          if (parsed) {
+
+            resultados.push(
+              parsed
+            );
+
+          }
+
+        } catch (error) {
+
+          console.error(
+            "❌ Error leyendo archivo:",
+            nombre,
+            error
           );
 
         }
@@ -72,7 +103,7 @@ export const procesarZIP =
       }
 
       // =====================
-      // CERRAR
+      // CERRAR ZIP
       // =====================
 
       await reader.close();
@@ -87,7 +118,7 @@ export const procesarZIP =
         );
 
       // =====================
-      // COMPLETAR
+      // COMPLETAR DÍAS
       // =====================
 
       return completarDiasFaltantes(
