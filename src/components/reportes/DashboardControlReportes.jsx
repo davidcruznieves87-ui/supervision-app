@@ -139,12 +139,23 @@ const filtrados =
   // TOTAL DIAS MES
   // =====================
 
-  const totalDias =
-    new Date(
-      año,
-      Number(mes),
-      0
-    ).getDate();
+  const mesTabla =
+  modo === "actual"
+    ? mesActual
+    : mesSeleccionado;
+
+const totalDias =
+  mesTabla
+    ? new Date(
+        Number(
+          mesTabla.substring(0, 4)
+        ),
+        Number(
+          mesTabla.substring(4, 6)
+        ),
+        0
+      ).getDate()
+    : 31;
 
   // =====================
   // AGRUPAR SALAS

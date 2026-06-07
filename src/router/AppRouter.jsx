@@ -18,6 +18,9 @@ import SupervisionesPage from "../pages/SupervisionesPage";
 
 import HistorialPage from "../pages/HistorialPage";
 
+import ConectividadPage
+from "../pages/ConectividadPage";
+
 import AdminPage from "../pages/AdminPage";
 
 import HistorialRotacionesPage from "../pages/HistorialRotacionesPage";
@@ -82,6 +85,23 @@ function AppRouter({
 
             }
           />
+
+<Route
+  path="/conectividad"
+  element={
+    <ProtectedRoute
+      allowedRoles={[
+        "supervisor",
+        "admin",
+        "superadmin",
+      ]}
+    >
+      <ConectividadPage />
+    </ProtectedRoute>
+  }
+/>
+
+
 
           {/* 🔥 HISTORIAL */}
           <Route

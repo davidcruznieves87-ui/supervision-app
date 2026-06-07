@@ -21,7 +21,24 @@ export const obtenerSupervisiones =
             db,
             "supervisiones"
           )
+              
         );
+        console.log(
+  "DOCUMENTOS:",
+  snapshot.docs.length
+);
+
+snapshot.docs.forEach(
+  (doc) => {
+
+    console.log(
+      "DOC:",
+      doc.id,
+      doc.data()
+    );
+
+  }
+);
 
       const supervisiones =
         snapshot.docs.map(

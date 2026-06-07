@@ -88,6 +88,11 @@ if (rol === "superadmin") {
   ruta: "/control-reportes",
 },
 
+{
+  nombre: "🌐 Conectividad",
+  ruta: "/conectividad",
+}
+
   ];
 }
 
@@ -132,6 +137,11 @@ else if (rol === "supervisor") {
   nombre: "📦 Control Reportes",
   ruta: "/control-reportes",
 },
+
+{
+  nombre: "🌐 Conectividad",
+  ruta: "/conectividad",
+}
   ];
 }
 
@@ -168,6 +178,12 @@ else if (rol === "supervisor") {
   nombre: "📦 Control Reportes",
   ruta: "/control-reportes",
 },
+
+{
+  nombre: "🌐 Conectividad",
+  ruta: "/conectividad",
+}
+
   ];
 }
 
