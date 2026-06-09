@@ -14,6 +14,9 @@ import ProtectedRoute from "./ProtectedRoute";
 // 🔥 PAGINAS
 import DashboardPage from "../pages/DashboardPage";
 
+import ActividadesPage
+from "../pages/ActividadesPage";
+
 import SupervisionesPage from "../pages/SupervisionesPage";
 
 import HistorialPage from "../pages/HistorialPage";
@@ -242,8 +245,25 @@ function AppRouter({
       ]}
     >
 
+
+
       <DashboardEjecutivoPage />
 
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/actividades"
+  element={
+    <ProtectedRoute
+      allowedRoles={[
+        "supervisor",
+        "admin",
+        "superadmin",
+      ]}
+    >
+      <ActividadesPage />
     </ProtectedRoute>
   }
 />
