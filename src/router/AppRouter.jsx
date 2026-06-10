@@ -36,6 +36,8 @@ import MantenimientoDashboard from "../pages/MantenimientoDashboard";
 
 import ControlReportesPage from "../pages/ControlReportesPage";
 
+import LayoutsPage from "../pages/LayoutsPage";
+
 function AppRouter({
   usuario,
 }) {
@@ -267,6 +269,14 @@ function AppRouter({
     </ProtectedRoute>
   }
 />
+
+<Route
+  path="/layouts"
+  element={
+    <LayoutsPage />
+  }
+/>
+
           {/* 🔥 FALLBACK */}
           <Route
             path="*"

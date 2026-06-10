@@ -98,6 +98,13 @@ if (rol === "superadmin") {
   ruta: "/actividades",
 },
 
+{
+  nombre:
+    "📐 Layouts",
+  ruta:
+    "/layouts",
+}
+
   ];
 }
 
@@ -152,6 +159,13 @@ else if (rol === "supervisor") {
   nombre: "📋 Actividades",
   ruta: "/actividades",
 },
+
+{
+  nombre:
+    "📐 Layouts",
+  ruta:
+    "/layouts",
+}
   ];
 }
 
@@ -198,6 +212,12 @@ else if (rol === "supervisor") {
   nombre: "📋 Actividades",
   ruta: "/actividades",
 },
+{
+  nombre:
+    "📐 Layouts",
+  ruta:
+    "/layouts",
+}
 
   ];
 }
