@@ -53,18 +53,30 @@ export async function leerPDFAF(file) {
 
 export function extraerAF(texto) {
 
-  return {
-    
-af:
-  texto.match(
-    /AF\s*Num\.?#?:?\s*(\d+)/i
-  )?.[1] || "",
+  const tieneProtocol =
+    texto.includes("Protocol:");
 
-solicitante: limpiar(
-  texto.match(
-    /Requested by:\s*([\s\S]*?)\s*Req Date:/i
-  )?.[1]
-),
+  console.log(
+    `AF detectada: ${
+      tieneProtocol
+        ? "CON PROTOCOL"
+        : "SIN PROTOCOL"
+    }`
+  );
+
+  return {
+
+    af:
+      texto.match(
+        /AF\s*Num\.?#?:?\s*(\d+)/i
+      )?.[1] || "",
+
+    solicitante: limpiar(
+      texto.match(
+        /Requested by:\s*([\s\S]*?)\s*Req Date:/i
+      )?.[1]
+    ),
+
     sala: limpiar(
       texto.match(
         /Site:\s*([\s\S]*?)\s*Activity:/i
@@ -73,20 +85,20 @@ solicitante: limpiar(
 
     tipoActividad: limpiar(
       texto.match(
-        /Activity:\s*([\s\S]*?)\s*Protocol:/i
+        /Activity:\s*([\s\S]*?)(?:\s*Protocol:|\s*Destination:)/i
       )?.[1]
     ),
 
     protocolo: limpiar(
       texto.match(
         /Protocol:\s*([\s\S]*?)\s*Reason:/i
-      )?.[1]
+      )?.[1] || ""
     ),
 
     motivo: limpiar(
       texto.match(
         /Reason:\s*([\s\S]*?)\s*Status:/i
-      )?.[1]
+      )?.[1] || ""
     ),
 
     cliente: limpiar(
@@ -114,18 +126,18 @@ solicitante: limpiar(
     ),
 
     fechaLimite:
-  texto.match(
-    /Deadline:\s*(\d{4}-\d{2}-\d{2})/i
-  )?.[1] || "",
+      texto.match(
+        /Deadline:\s*(\d{4}-\d{2}-\d{2})/i
+      )?.[1] || "",
 
-terminales:
-  extraerTerminales(texto),
+    terminales:
+      extraerTerminales(texto),
 
-  indicacionesEspeciales: limpiar(
-  texto.match(
-    /Special Indications:\s*([\s\S]*?)\s*Status:/i
-  )?.[1]
-),
+    indicacionesEspeciales: limpiar(
+      texto.match(
+        /Special Indications:\s*([\s\S]*?)\s*Status:/i
+      )?.[1]
+    ),
 
   };
 }
@@ -135,13 +147,12 @@ function extraerTerminales(texto) {
   const terminales = [];
 
   const regex =
-    /SN:\s*(\d+).*?VLT:\s*([^ ]+).*?LOC:\s*([^ ]+)/gs;
+    /SN:\s*(\d+)\s*\|\s*VLT:\s*(\d+)\s*\|\s*LOC:\s*([A-Z0-9]+)/gi;
 
   let match;
 
   while (
-    (match = regex.exec(texto))
-    !== null
+    (match = regex.exec(texto)) !== null
   ) {
 
     terminales.push({
