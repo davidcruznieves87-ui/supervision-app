@@ -1,3 +1,4 @@
+
 import {
   BrowserRouter,
   Routes,
@@ -14,15 +15,13 @@ import ProtectedRoute from "./ProtectedRoute";
 // 🔥 PAGINAS
 import DashboardPage from "../pages/DashboardPage";
 
-import ActividadesPage
-from "../pages/ActividadesPage";
+import ActividadesPage from "../pages/ActividadesPage";
 
 import SupervisionesPage from "../pages/SupervisionesPage";
 
 import HistorialPage from "../pages/HistorialPage";
 
-import ConectividadPage
-from "../pages/ConectividadPage";
+import ConectividadPage from "../pages/ConectividadPage";
 
 import AdminPage from "../pages/AdminPage";
 
@@ -37,6 +36,10 @@ import MantenimientoDashboard from "../pages/MantenimientoDashboard";
 import ControlReportesPage from "../pages/ControlReportesPage";
 
 import LayoutsPage from "../pages/LayoutsPage";
+
+// 🔍 NUEVO COMPARADOR JSON
+import ResumenJsonPage from "../pages/ResumenJsonPage";
+
 
 function AppRouter({
   usuario,
@@ -72,6 +75,7 @@ function AppRouter({
             }
           />
 
+
           {/* 🔥 SUPERVISIONES */}
           <Route
             path="/supervisiones"
@@ -91,21 +95,26 @@ function AppRouter({
             }
           />
 
-<Route
-  path="/conectividad"
-  element={
-    <ProtectedRoute
-      allowedRoles={[
-        "supervisor",
-        "admin",
-        "superadmin",
-      ]}
-    >
-      <ConectividadPage />
-    </ProtectedRoute>
-  }
-/>
 
+          {/* 🔥 CONECTIVIDAD */}
+          <Route
+            path="/conectividad"
+            element={
+
+              <ProtectedRoute
+                allowedRoles={[
+                  "supervisor",
+                  "admin",
+                  "superadmin",
+                ]}
+              >
+
+                <ConectividadPage />
+
+              </ProtectedRoute>
+
+            }
+          />
 
 
           {/* 🔥 HISTORIAL */}
@@ -129,6 +138,7 @@ function AppRouter({
 
             }
           />
+
 
           {/* 🔥 ADMIN */}
           <Route
@@ -174,6 +184,7 @@ function AppRouter({
             }
           />
 
+
           {/* 🔥 MANTENIMIENTO */}
           <Route
             path="/mantenimiento"
@@ -192,10 +203,50 @@ function AppRouter({
 
             }
           />
-<Route
-  path="/control-reportes"
-  element={<ControlReportesPage />}
-/>
+
+
+          {/* 🔥 CONTROL REPORTES */}
+          <Route
+            path="/control-reportes"
+            element={
+
+              <ProtectedRoute
+                allowedRoles={[
+                  "supervisor",
+                  "admin",
+                  "superadmin",
+                ]}
+              >
+
+                <ControlReportesPage />
+
+              </ProtectedRoute>
+
+            }
+          />
+
+
+          {/* 🔍 COMPARADOR JSON */}
+          <Route
+            path="/comparador-json"
+            element={
+
+              <ProtectedRoute
+                allowedRoles={[
+                  "supervisor",
+                  "admin",
+                  "superadmin",
+                ]}
+              >
+
+                <ResumenJsonPage />
+
+              </ProtectedRoute>
+
+            }
+          />
+
+
           {/* 🔥 DASHBOARD MTTO */}
           <Route
             path="/dashboard-mantenimiento"
@@ -216,66 +267,90 @@ function AppRouter({
 
             }
           />
-{/* 🔥 HISTORIAL ROTACIONES */}
-<Route
-  path="/historial-rotaciones"
-  element={
-
-    <ProtectedRoute
-      allowedRoles={[
-        "supervisor",
-        "superadmin",
-      ]}
-    >
-
-      <HistorialRotacionesPage />
-
-    </ProtectedRoute>
-
-  }
-/>
-
-<Route
-  path="/dashboard-ejecutivo"
-  element={
-
-    <ProtectedRoute
-      allowedRoles={[
-        "supervisor",
-        "admin",
-        "superadmin",
-      ]}
-    >
 
 
+          {/* 🔥 HISTORIAL ROTACIONES */}
+          <Route
+            path="/historial-rotaciones"
+            element={
 
-      <DashboardEjecutivoPage />
+              <ProtectedRoute
+                allowedRoles={[
+                  "supervisor",
+                  "superadmin",
+                ]}
+              >
 
-    </ProtectedRoute>
-  }
-/>
+                <HistorialRotacionesPage />
 
-<Route
-  path="/actividades"
-  element={
-    <ProtectedRoute
-      allowedRoles={[
-        "supervisor",
-        "admin",
-        "superadmin",
-      ]}
-    >
-      <ActividadesPage />
-    </ProtectedRoute>
-  }
-/>
+              </ProtectedRoute>
 
-<Route
-  path="/layouts"
-  element={
-    <LayoutsPage />
-  }
-/>
+            }
+          />
+
+
+          {/* 🔥 DASHBOARD EJECUTIVO */}
+          <Route
+            path="/dashboard-ejecutivo"
+            element={
+
+              <ProtectedRoute
+                allowedRoles={[
+                  "supervisor",
+                  "admin",
+                  "superadmin",
+                ]}
+              >
+
+                <DashboardEjecutivoPage />
+
+              </ProtectedRoute>
+
+            }
+          />
+
+
+          {/* 🔥 ACTIVIDADES */}
+          <Route
+            path="/actividades"
+            element={
+
+              <ProtectedRoute
+                allowedRoles={[
+                  "supervisor",
+                  "admin",
+                  "superadmin",
+                ]}
+              >
+
+                <ActividadesPage />
+
+              </ProtectedRoute>
+
+            }
+          />
+
+
+          {/* 🔥 LAYOUTS */}
+          <Route
+            path="/layouts"
+            element={
+
+              <ProtectedRoute
+                allowedRoles={[
+                  "supervisor",
+                  "admin",
+                  "superadmin",
+                ]}
+              >
+
+                <LayoutsPage />
+
+              </ProtectedRoute>
+
+            }
+          />
+
 
           {/* 🔥 FALLBACK */}
           <Route

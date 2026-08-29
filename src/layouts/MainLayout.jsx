@@ -1,3 +1,4 @@
+
 import {
   Link,
   useLocation,
@@ -12,6 +13,7 @@ import {
   auth,
 } from "../firebase";
 
+
 function MainLayout({
 
   children,
@@ -25,6 +27,7 @@ function MainLayout({
   const navigate =
     useNavigate();
 
+
   // 🔥 NORMALIZAR ROL
   const rol = (
     usuario?.rol || ""
@@ -36,193 +39,233 @@ function MainLayout({
       ""
     );
 
+
   console.log(
     "ROL ACTUAL:",
     rol
   );
 
+
   // 🔥 MENU
   let menu = [];
 
-  // 🔥 SUPERADMIN
-if (rol === "superadmin") {
 
-  menu = [
+  // =====================================================
+  // SUPERADMIN
+  // =====================================================
 
-    {
-      nombre: "📊 Dashboard",
-      ruta: "/",
-    },
+  if (
+    rol === "superadmin"
+  ) {
 
-    {
-      nombre: "📝 Supervisiones",
-      ruta: "/supervisiones",
-    },
+    menu = [
 
-    {
-      nombre: "📁 Historial",
-      ruta: "/historial",
-    },
+      {
+        nombre: "📊 Dashboard",
+        ruta: "/",
+      },
 
-    {
-      nombre: "🔨 Mantenimientos",
-      ruta: "/mantenimiento",
-    },
+      {
+        nombre: "📝 Supervisiones",
+        ruta: "/supervisiones",
+      },
 
-    {
-      nombre: "📈 Dashboard MTTO",
-      ruta: "/dashboard-mantenimiento",
-    },
+      {
+        nombre: "📁 Historial",
+        ruta: "/historial",
+      },
 
-    {
-      nombre: "👨‍💼 Administración",
-      ruta: "/admin",
-    },
-{
-  nombre: "📊 Dashboard Ejecutivo",
-  ruta: "/dashboard-ejecutivo",
-},
+      {
+        nombre: "🔨 Mantenimientos",
+        ruta: "/mantenimiento",
+      },
 
-{
-  nombre: "📦 Control Reportes",
-  ruta: "/control-reportes",
-},
+      {
+        nombre: "📈 Dashboard MTTO",
+        ruta: "/dashboard-mantenimiento",
+      },
 
-{
-  nombre: "🌐 Conectividad",
-  ruta: "/conectividad",
-},
+      {
+        nombre: "👨‍💼 Administración",
+        ruta: "/admin",
+      },
 
-{
-  nombre: "📋 Actividades",
-  ruta: "/actividades",
-},
+      {
+        nombre: "📊 Dashboard Ejecutivo",
+        ruta: "/dashboard-ejecutivo",
+      },
 
-{
-  nombre:
-    "📐 Layouts",
-  ruta:
-    "/layouts",
-}
+      {
+        nombre: "📦 Control Reportes",
+        ruta: "/control-reportes",
+      },
 
-  ];
-}
+      {
+        nombre: "🔍 Comparador JSON",
+        ruta: "/comparador-json",
+      },
 
-  // 🔥 SUPERVISOR
-else if (rol === "supervisor") {
+      {
+        nombre: "🌐 Conectividad",
+        ruta: "/conectividad",
+      },
 
-  menu = [
+      {
+        nombre: "📋 Actividades",
+        ruta: "/actividades",
+      },
 
-    {
-      nombre: "📊 Dashboard",
-      ruta: "/",
-    },
+      {
+        nombre: "📐 Layouts",
+        ruta: "/layouts",
+      },
 
-    {
-      nombre: "📝 Supervisiones",
-      ruta: "/supervisiones",
-    },
+    ];
+  }
 
-    {
-      nombre: "📁 Historial",
-      ruta: "/historial",
-    },
-{
-  nombre: "🔄 Rotaciones",
-  ruta: "/historial-rotaciones",
-},
-    {
-      nombre: "👨‍💼 Administración",
-      ruta: "/admin",
-    },
 
-    {
-      nombre: "📈 Mantenimientos Realizados",
-      ruta: "/dashboard-mantenimiento",
-    },
-{
-  nombre: "📊 Dashboard Ejecutivo",
-  ruta: "/dashboard-ejecutivo",
-},
+  // =====================================================
+  // SUPERVISOR
+  // =====================================================
 
-{
-  nombre: "📦 Control Reportes",
-  ruta: "/control-reportes",
-},
+  else if (
+    rol === "supervisor"
+  ) {
 
-{
-  nombre: "🌐 Conectividad",
-  ruta: "/conectividad",
-},
+    menu = [
 
-{
-  nombre: "📋 Actividades",
-  ruta: "/actividades",
-},
+      {
+        nombre: "📊 Dashboard",
+        ruta: "/",
+      },
 
-{
-  nombre:
-    "📐 Layouts",
-  ruta:
-    "/layouts",
-}
-  ];
-}
+      {
+        nombre: "📝 Supervisiones",
+        ruta: "/supervisiones",
+      },
 
-  // 🔥 ADMIN
- else if (rol === "admin") {
+      {
+        nombre: "📁 Historial",
+        ruta: "/historial",
+      },
 
-  menu = [
+      {
+        nombre: "🔄 Rotaciones",
+        ruta: "/historial-rotaciones",
+      },
 
-    {
-      nombre: "📊 Dashboard",
-      ruta: "/",
-    },
+      {
+        nombre: "👨‍💼 Administración",
+        ruta: "/admin",
+      },
 
-    {
-      nombre: "👨‍💼 Administración",
-      ruta: "/admin",
-    },
+      {
+        nombre: "📈 Mantenimientos Realizados",
+        ruta: "/dashboard-mantenimiento",
+      },
 
-    {
-      nombre: "📁 Historial",
-      ruta: "/historial",
-    },
+      {
+        nombre: "📊 Dashboard Ejecutivo",
+        ruta: "/dashboard-ejecutivo",
+      },
 
-    {
-      nombre: "📈 Dashboard General",
-      ruta: "/dashboard-mantenimiento",
-    },
-{
-  nombre: "📊 Dashboard Ejecutivo",
-  ruta: "/dashboard-ejecutivo",
-},
+      {
+        nombre: "📦 Control Reportes",
+        ruta: "/control-reportes",
+      },
 
-{
-  nombre: "📦 Control Reportes",
-  ruta: "/control-reportes",
-},
+      {
+        nombre: "🔍 Comparador JSON",
+        ruta: "/comparador-json",
+      },
 
-{
-  nombre: "🌐 Conectividad",
-  ruta: "/conectividad",
-},
+      {
+        nombre: "🌐 Conectividad",
+        ruta: "/conectividad",
+      },
 
-{
-  nombre: "📋 Actividades",
-  ruta: "/actividades",
-},
-{
-  nombre:
-    "📐 Layouts",
-  ruta:
-    "/layouts",
-}
+      {
+        nombre: "📋 Actividades",
+        ruta: "/actividades",
+      },
 
-  ];
-}
+      {
+        nombre: "📐 Layouts",
+        ruta: "/layouts",
+      },
 
-  // 🔥 TECNICO
+    ];
+  }
+
+
+  // =====================================================
+  // ADMIN
+  // =====================================================
+
+  else if (
+    rol === "admin"
+  ) {
+
+    menu = [
+
+      {
+        nombre: "📊 Dashboard",
+        ruta: "/",
+      },
+
+      {
+        nombre: "👨‍💼 Administración",
+        ruta: "/admin",
+      },
+
+      {
+        nombre: "📁 Historial",
+        ruta: "/historial",
+      },
+
+      {
+        nombre: "📈 Dashboard General",
+        ruta: "/dashboard-mantenimiento",
+      },
+
+      {
+        nombre: "📊 Dashboard Ejecutivo",
+        ruta: "/dashboard-ejecutivo",
+      },
+
+      {
+        nombre: "📦 Control Reportes",
+        ruta: "/control-reportes",
+      },
+
+      {
+        nombre: "🔍 Comparador JSON",
+        ruta: "/comparador-json",
+      },
+
+      {
+        nombre: "🌐 Conectividad",
+        ruta: "/conectividad",
+      },
+
+      {
+        nombre: "📋 Actividades",
+        ruta: "/actividades",
+      },
+
+      {
+        nombre: "📐 Layouts",
+        ruta: "/layouts",
+      },
+
+    ];
+  }
+
+
+  // =====================================================
+  // TECNICO
+  // =====================================================
+
   else if (
     rol === "tecnico"
   ) {
@@ -244,58 +287,92 @@ else if (rol === "supervisor") {
         ruta:
           "/dashboard-mantenimiento",
       },
+
     ];
   }
 
-  // 🔥 LOGOUT
+
+  // =====================================================
+  // LOGOUT
+  // =====================================================
+
   const cerrarSesion =
     async () => {
 
       try {
 
-        await signOut(auth);
+        await signOut(
+          auth
+        );
 
-        navigate("/login");
+        navigate(
+          "/login"
+        );
 
-      } catch (error) {
+      } catch (
+        error
+      ) {
 
-        console.log(error);
+        console.log(
+          error
+        );
+
       }
     };
+
+
+  // =====================================================
+  // RENDER
+  // =====================================================
 
   return (
 
     <div
       style={{
 
-        display: "flex",
+        display:
+          "flex",
 
-        minHeight: "100vh",
+        minHeight:
+          "100vh",
 
         background:
           "#0F172A",
+
       }}
     >
 
       {/* 🔥 SIDEBAR */}
+
       <aside
         style={{
 
-          width: "260px",
+          width:
+            "260px",
 
           background:
             "#020617",
 
-          padding: "20px",
+          padding:
+            "20px",
 
-          color: "white",
+          color:
+            "white",
 
           borderRight:
             "1px solid #1E293B",
+
+          boxSizing:
+            "border-box",
+
+          flexShrink:
+            0,
+
         }}
       >
 
         {/* 🔥 TITULO */}
+
         <h1
           style={{
 
@@ -307,6 +384,7 @@ else if (rol === "supervisor") {
 
             fontWeight:
               "bold",
+
           }}
         >
 
@@ -314,16 +392,21 @@ else if (rol === "supervisor") {
 
         </h1>
 
+
         {/* 🔥 MENU */}
+
         <nav
           style={{
 
-            display: "flex",
+            display:
+              "flex",
 
             flexDirection:
               "column",
 
-            gap: "15px",
+            gap:
+              "15px",
+
           }}
         >
 
@@ -332,9 +415,13 @@ else if (rol === "supervisor") {
               (item) => (
 
                 <Link
-                  key={item.ruta}
+                  key={
+                    item.ruta
+                  }
 
-                  to={item.ruta}
+                  to={
+                    item.ruta
+                  }
 
                   style={{
 
@@ -361,6 +448,7 @@ else if (rol === "supervisor") {
 
                     fontWeight:
                       "bold",
+
                   }}
                 >
 
@@ -369,13 +457,16 @@ else if (rol === "supervisor") {
                   }
 
                 </Link>
+
               )
             )
           }
 
         </nav>
 
+
         {/* 🔥 USUARIO */}
+
         <div
           style={{
 
@@ -390,6 +481,7 @@ else if (rol === "supervisor") {
 
             borderRadius:
               "15px",
+
           }}
         >
 
@@ -407,6 +499,7 @@ else if (rol === "supervisor") {
 
           </div>
 
+
           <div
             style={{
 
@@ -418,19 +511,26 @@ else if (rol === "supervisor") {
 
               fontSize:
                 "14px",
+
             }}
           >
 
             Rol:
             {" "}
-            {rol || "sin rol"}
+            {
+              rol ||
+              "sin rol"
+            }
 
           </div>
 
         </div>
 
+
         {/* 🔥 LOGOUT */}
+
         <button
+
           onClick={
             cerrarSesion
           }
@@ -440,7 +540,8 @@ else if (rol === "supervisor") {
             marginTop:
               "20px",
 
-            width: "100%",
+            width:
+              "100%",
 
             background:
               "#EF4444",
@@ -462,6 +563,7 @@ else if (rol === "supervisor") {
 
             cursor:
               "pointer",
+
           }}
         >
 
@@ -471,13 +573,24 @@ else if (rol === "supervisor") {
 
       </aside>
 
+
       {/* 🔥 CONTENIDO */}
+
       <main
         style={{
 
-          flex: 1,
+          flex:
+            1,
 
-          padding: "20px",
+          minWidth:
+            0,
+
+          padding:
+            "20px",
+
+          background:
+            "#F1F5F9",
+
         }}
       >
 
@@ -489,4 +602,6 @@ else if (rol === "supervisor") {
   );
 }
 
+
 export default MainLayout;
+
