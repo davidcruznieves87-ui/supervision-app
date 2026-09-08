@@ -1,379 +1,824 @@
 import * as pdfjsLib from "pdfjs-dist";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  new URL(
-    "pdfjs-dist/build/pdf.worker.mjs",
-    import.meta.url
-  ).toString();
+import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 
-function limpiar(valor = "") {
-  return valor
-    .replace(/\s+/g, " ")
-    .replace(/\b\d+\s*$/, "")
-    .trim();
+/*
+=====================================================
+FUNCIÓN PRINCIPAL
+=====================================================
+
+El componente manda directamente:
+
+extraerAF(file)
+
+Esta función:
+1. Lee el PDF
+2. Extrae el texto
+3. Analiza los datos generales
+4. Analiza las terminales
+=====================================================
+*/
+
+export async function extraerAF(file) {
+
+  if (!file) {
+    throw new Error(
+      "No se recibió archivo PDF."
+    );
+  }
+
+
+  /*
+  =====================================================
+  LEER PDF
+  =====================================================
+  */
+
+  const texto =
+    await leerPDFAF(file);
+
+
+  console.log(
+    "===== TEXTO PDF EXTRAIDO ====="
+  );
+
+  console.log(texto);
+
+
+  /*
+  =====================================================
+  EXTRAER INFORMACIÓN
+  =====================================================
+  */
+
+  const datos =
+    analizarAF(texto);
+
+
+  return datos;
 }
 
 
+/*
+=====================================================
+LEER PDF
+=====================================================
+*/
+
 export async function leerPDFAF(file) {
-  const buffer =
+
+  const arrayBuffer =
     await file.arrayBuffer();
+
 
   const pdf =
     await pdfjsLib.getDocument({
-      data: buffer,
+      data: arrayBuffer,
     }).promise;
 
-  let texto = "";
+
+  let textoCompleto = "";
+
 
   for (
-    let i = 1;
-    i <= pdf.numPages;
-    i++
+    let pagina = 1;
+    pagina <= pdf.numPages;
+    pagina++
   ) {
-    const page =
-      await pdf.getPage(i);
 
-    const content =
+    const page =
+      await pdf.getPage(
+        pagina
+      );
+
+
+    const contenido =
       await page.getTextContent();
 
-    texto +=
-      content.items
-        .map(
-          item => item.str
-        )
+
+    /*
+    IMPORTANTE:
+
+    Conservamos cada item separado
+    por espacios.
+
+    Los caracteres:
+    |
+    -->
+    :
+    siguen presentes.
+    */
+
+    const textoPagina =
+      contenido.items
+        .map((item) => item.str)
         .join(" ");
 
-    texto += "\n";
+
+    textoCompleto +=
+      ` ${textoPagina} `;
+
   }
 
-  return texto;
+
+  return normalizarTexto(
+    textoCompleto
+  );
 }
 
 
-export function extraerAF(texto) {
-  const tieneProtocol =
-    texto.includes("Protocol:");
+/*
+=====================================================
+ANALIZAR AF
+=====================================================
+*/
 
-  console.log(
-    `AF detectada: ${
-      tieneProtocol
-        ? "CON PROTOCOL"
-        : "SIN PROTOCOL"
-    }`
-  );
+function analizarAF(texto) {
+
+  if (!texto) {
+
+    return crearResultadoVacio();
+
+  }
+
+
+  const t =
+    normalizarTexto(texto);
+
+
+  /*
+  =====================================================
+  CAMPOS GENERALES
+  =====================================================
+  */
+
+  const af =
+    buscar(
+      t,
+      /AF\s*Num\.?\s*#?\s*:\s*(\d+)/i
+    );
+
+
+  const proyecto =
+    buscar(
+      t,
+      /Proj\.?\s*#?\s*:\s*([A-Z0-9-]+)/i
+    );
+
+
+  /*
+  SALA
+
+  Capturamos desde Site:
+  hasta Activity:
+  */
+
+  const sala =
+    buscar(
+      t,
+      /Site\s*:\s*(.*?)(?=\s+Activity\s*:)/i
+    );
+
+
+  /*
+  ACTIVIDAD
+
+  Puede venir:
+
+  Activity:
+  Protocol:
+
+  o:
+
+  Activity:
+  Reason:
+  */
+
+  const tipoActividad =
+    buscar(
+      t,
+      /Activity\s*:\s*(.*?)(?=\s+Protocol\s*:|\s+Reason\s*:|\s+Status\s*:)/i
+    );
+
+
+  const protocolo =
+    buscar(
+      t,
+      /Protocol\s*:\s*(.*?)(?=\s+Reason\s*:|\s+Status\s*:)/i
+    );
+
+
+  /*
+  RAZÓN
+  */
+
+  const razon =
+    buscar(
+      t,
+      /Reason\s*:\s*(.*?)(?=\s+Status\s*:)/i
+    );
+
+
+  /*
+  FECHA
+
+  Permitimos:
+
+  Deadline:
+  Due Date:
+  */
+
+  const fechaLimite =
+    buscar(
+      t,
+      /(?:Deadline|Due\s*Date)\s*:\s*(\d{4}-\d{2}-\d{2})/i
+    );
+
+
+  /*
+  CLIENTE
+  */
+
+  let cliente =
+    buscar(
+      t,
+      /Business\s*Name\s*:\s*(.*?)(?=\s+Operator\s*Name\s*:|\s+Fullname\s*:|\s+Contact\s*Name\s*:)/i
+    );
+
+
+  /*
+  Algunos formatos pueden usar Client:
+  */
+
+  if (!cliente) {
+
+    cliente =
+      buscar(
+        t,
+        /Client\s*:\s*(.*?)(?=\s+Contact|\s+Email|\s+Deadline|\s+Due\s*Date)/i
+      );
+
+  }
+
+
+  /*
+  CONTACTO
+  */
+
+  let contacto =
+    buscar(
+      t,
+      /Contact\s*Name\s*:\s*(.*?)(?=\s+Contact\s*Email\s*:)/i
+    );
+
+
+  if (!contacto) {
+
+    contacto =
+      buscar(
+        t,
+        /Fullname\s*:\s*(.*?)(?=\s+Email\s*:|\s+Contact\s*Email\s*:)/i
+      );
+
+  }
+
+
+  /*
+  CORREO
+  */
+
+  let correo =
+    buscar(
+      t,
+      /Contact\s*Email\s*:\s*([^\s|]+@[^\s|]+)/i
+    );
+
+
+  if (!correo) {
+
+    correo =
+      buscar(
+        t,
+        /Email\s*:\s*([^\s|]+@[^\s|]+)/i
+      );
+
+  }
+
+
+  /*
+  =====================================================
+  TERMINALES
+  =====================================================
+  */
 
   const terminales =
-    extraerTerminales(texto);
+    extraerTerminales(t);
 
-  console.log(
-    "TERMINALES EXTRAÍDAS:",
-    terminales
-  );
+
+  /*
+  =====================================================
+  INDICACIONES
+  =====================================================
+  */
+
+  const indicacionesEspeciales =
+    extraerIndicaciones(t);
+
+
+  /*
+  =====================================================
+  RESULTADO
+  =====================================================
+  */
 
   return {
 
-    af:
-      texto.match(
-        /AF\s*Num\.?#?:?\s*(\d+)/i
-      )?.[1] || "",
+    af,
 
-    solicitante: limpiar(
-      texto.match(
-        /Requested by:\s*([\s\S]*?)\s*Req Date:/i
-      )?.[1]
-    ),
+    proyecto,
 
-    sala: limpiar(
-      texto.match(
-        /Site:\s*([\s\S]*?)\s*Activity:/i
-      )?.[1]
-    ),
+    sala,
 
-    tipoActividad: limpiar(
-      texto.match(
-        /Activity:\s*([\s\S]*?)(?:\s*Protocol:|\s*Destination:)/i
-      )?.[1]
-    ),
+    tipoActividad,
 
-    protocolo: limpiar(
-      texto.match(
-        /Protocol:\s*([\s\S]*?)\s*Reason:/i
-      )?.[1] || ""
-    ),
+    protocolo,
 
-    // Mantenemos "motivo" porque
-    // ActividadesPage ya puede usar este campo.
-    motivo: limpiar(
-      texto.match(
-        /Reason:\s*([\s\S]*?)\s*Status:/i
-      )?.[1] || ""
-    ),
+    razon,
 
-    // También generamos "razon" para poder
-    // mostrarlo directamente en las tarjetas.
-    razon: limpiar(
-      texto.match(
-        /Reason:\s*([\s\S]*?)\s*Status:/i
-      )?.[1] || ""
-    ),
+    motivo:
+      razon,
 
-    cliente: limpiar(
-      texto.match(
-        /Business Name:\s*([\s\S]*?)\s*Operator Name:/i
-      )?.[1]
-    ),
+    fechaLimite,
 
-    operador: limpiar(
-      texto.match(
-        /Operator Name:\s*([\s\S]*?)\s*Fullname:/i
-      )?.[1]
-    ),
+    cliente,
 
-    contacto: limpiar(
-      texto.match(
-        /Contact Name:\s*([\s\S]*?)\s*Contact Email:/i
-      )?.[1]
-    ),
+    contacto,
 
-    correo: limpiar(
-      texto.match(
-        /Contact Email:\s*([\s\S]*?)\s*Contact Phone:/i
-      )?.[1]
-    ),
+    correo,
 
-    fechaLimite:
-      texto.match(
-        /Deadline:\s*(\d{4}-\d{2}-\d{2})/i
-      )?.[1] || "",
+    indicacionesEspeciales,
 
     terminales,
-
-    indicacionesEspeciales: limpiar(
-      texto.match(
-        /Special Indications:\s*([\s\S]*?)\s*Status:/i
-      )?.[1]
-    ),
 
   };
 }
 
 
 /*
-===================================================
- EXTRAER TERMINALES
-===================================================
-
-Formato esperado en AF:
-
-SN: 2020090226 | VLT: 24503 | Loc: C1NX4 |
-GALAXY II |
-CASHIN RAIL EXPRESS |
-QUIXANT 7000 --> 88 FESTIVAL
-
-
-Resultado:
-
-{
-  sn: "2020090226",
-  vlt: "24503",
-  loc: "C1NX4",
-  juegoActual: "CASHIN RAIL EXPRESS",
-  juegoNuevo: "88 FESTIVAL"
-}
-
-===================================================
+=====================================================
+EXTRAER TERMINALES
+=====================================================
 */
 
 function extraerTerminales(texto) {
 
   const terminales = [];
 
+
   /*
-  Primero localizamos cada terminal por:
+  =====================================================
+  BUSCAR INICIO DE CADA TERMINAL
+  =====================================================
+
+  Capturamos solamente:
 
   SN
   VLT
   LOC
 
-  Después tomamos todo el texto existente
-  hasta encontrar el siguiente SN o el final.
+  y guardamos la posición donde empieza.
+
+  Después cortamos manualmente hasta el siguiente SN.
+
+  Esto es mucho más resistente que intentar
+  capturar toda la terminal con un único regex.
+  =====================================================
   */
 
-  const regexTerminal =
-    /SN:\s*(\d+)\s*\|\s*VLT:\s*(\d+)\s*\|\s*LOC:\s*([A-Z0-9]+)\s*\|([\s\S]*?)(?=SN:\s*\d+\s*\|\s*VLT:|$)/gi;
+  const regexInicio =
+    /SN\s*:\s*([^|]+?)\s*\|\s*VLT\s*:\s*([^|]+?)\s*\|\s*LOC\s*:\s*([^|]+?)\s*\|/gi;
+
+
+  const encontrados = [];
 
   let match;
 
+
   while (
-    (match =
-      regexTerminal.exec(texto)) !== null
+    (
+      match =
+        regexInicio.exec(texto)
+    ) !== null
   ) {
 
-    const sn =
-      match[1]?.trim() || "";
+    encontrados.push({
 
-    const vlt =
-      match[2]?.trim() || "";
+      index:
+        match.index,
 
-    const loc =
-      match[3]?.trim() || "";
+      finEncabezado:
+        regexInicio.lastIndex,
 
-    const contenido =
-      limpiar(match[4] || "");
+      sn:
+        limpiar(match[1]),
 
+      vlt:
+        limpiar(match[2]),
 
-    /*
-    -----------------------------------------------
-    Detectar cambio:
-    -----------------------------------------------
-
-    Ejemplo:
-
-    GALAXY II |
-    CASHIN RAIL EXPRESS |
-    QUIXANT 7000 --> 88 FESTIVAL
-
-    Primero buscamos lo que está después de -->
-    */
-
-    let juegoNuevo = "";
-
-    const cambioMatch =
-      contenido.match(
-        /-->\s*([^|]+?)(?=\s*(?:SN:|$))/i
-      );
-
-    if (cambioMatch) {
-      juegoNuevo =
-        limpiar(cambioMatch[1]);
-    }
-
-
-    /*
-    -----------------------------------------------
-    Detectar juego actual
-    -----------------------------------------------
-
-    Antes de --> normalmente tendremos:
-
-    GALAXY II |
-    CASHIN RAIL EXPRESS |
-    QUIXANT 7000
-
-    El último campo es plataforma,
-    así que tomamos el penúltimo.
-    */
-
-    const antesCambio =
-      contenido
-        .split("-->")[0]
-        ?.trim() || "";
-
-    const partes =
-      antesCambio
-        .split("|")
-        .map(item =>
-          limpiar(item)
-        )
-        .filter(Boolean);
-
-
-    let juegoActual = "";
-
-    /*
-    Ejemplo de partes:
-
-    [
-      "GALAXY II",
-      "CASHIN RAIL EXPRESS",
-      "QUIXANT 7000"
-    ]
-
-    Tomamos el penúltimo elemento.
-    */
-
-    if (partes.length >= 2) {
-
-      juegoActual =
-        partes[
-          partes.length - 2
-        ];
-
-    } else if (
-      partes.length === 1
-    ) {
-
-      juegoActual =
-        partes[0];
-
-    }
-
-
-    terminales.push({
-
-      sn,
-
-      vlt,
-
-      loc,
-
-      juegoActual,
-
-      juegoNuevo,
+      loc:
+        limpiar(match[3]),
 
     });
-
   }
 
 
   /*
-  -------------------------------------------------
-  FALLBACK
-  -------------------------------------------------
-
-  Si por alguna variante del PDF no se encontró
-  el bloque completo, al menos recuperamos
-  SN / VLT / LOC como lo hacía el parser anterior.
+  =====================================================
+  PROCESAR CADA TERMINAL
+  =====================================================
   */
 
-  if (
-    terminales.length === 0
-  ) {
+  encontrados.forEach(
+    (terminal, index) => {
 
-    const regexBasico =
-      /SN:\s*(\d+)\s*\|\s*VLT:\s*(\d+)\s*\|\s*LOC:\s*([A-Z0-9]+)/gi;
+      /*
+      El bloque termina:
 
-    let matchBasico;
+      - en el siguiente SN
+      - o al final del documento
+      */
 
-    while (
-      (
-        matchBasico =
-          regexBasico.exec(texto)
-      ) !== null
-    ) {
+      let finBloque =
+        index <
+        encontrados.length - 1
+          ? encontrados[index + 1]
+              .index
+          : texto.length;
+
+
+      let contenido =
+        texto
+          .substring(
+            terminal.finEncabezado,
+            finBloque
+          )
+          .trim();
+
+
+      /*
+      Para la última terminal quitamos
+      cualquier sección posterior.
+      */
+
+      contenido =
+        contenido
+          .split(
+            /Special\s*Indications\s*:/i
+          )[0]
+          .split(
+            /Indicaciones\s*Especiales\s*:/i
+          )[0]
+          .trim();
+
+
+      /*
+      ===================================================
+      DETECTAR FLECHA
+      ===================================================
+
+      Soportamos:
+
+      -->
+      --->
+      -- >
+
+      PDF.js puede introducir espacios.
+      */
+
+      const regexFlecha =
+        /-{2,}\s*>/;
+
+
+      const flecha =
+        regexFlecha.exec(
+          contenido
+        );
+
+
+      let izquierda =
+        contenido;
+
+
+      let juegoNuevo =
+        "";
+
+
+      if (flecha) {
+
+        izquierda =
+          contenido
+            .substring(
+              0,
+              flecha.index
+            )
+            .trim();
+
+
+        juegoNuevo =
+          contenido
+            .substring(
+              flecha.index +
+              flecha[0].length
+            )
+            .trim();
+
+      }
+
+
+      /*
+      ===================================================
+      CAMPOS ANTES DE LA FLECHA
+      ===================================================
+
+      Ejemplo:
+
+      GALAXY II
+      |
+      TEMPLE OF GODS
+      |
+      QUIXANT 7000
+
+      [0] gabinete
+      [1] juego actual
+      [2] plataforma
+
+      Si el nombre del juego genera más segmentos,
+      conservamos todo lo intermedio.
+      */
+
+      const campos =
+        izquierda
+          .split("|")
+          .map(limpiar)
+          .filter(Boolean);
+
+
+      let juegoActual = "";
+
+
+      if (campos.length >= 3) {
+
+        juegoActual =
+          campos
+            .slice(
+              1,
+              campos.length - 1
+            )
+            .join(" | ")
+            .trim();
+
+      }
+
+      else if (
+        campos.length === 2
+      ) {
+
+        juegoActual =
+          campos[1];
+
+      }
+
+      else if (
+        campos.length === 1
+      ) {
+
+        juegoActual =
+          campos[0];
+
+      }
+
+
+      /*
+      ===================================================
+      LIMPIAR JUEGO NUEVO
+      ===================================================
+      */
+
+      juegoNuevo =
+        juegoNuevo
+          .replace(
+            /\s+Special\s*Indications\s*:.*$/i,
+            ""
+          )
+          .replace(
+            /\s+Indicaciones\s*Especiales\s*:.*$/i,
+            ""
+          )
+          .replace(
+            /\s+Status\s*:.*$/i,
+            ""
+          )
+          .trim();
+
 
       terminales.push({
 
         sn:
-          matchBasico[1],
+          terminal.sn,
 
         vlt:
-          matchBasico[2],
+          terminal.vlt,
 
         loc:
-          matchBasico[3],
+          terminal.loc,
 
-        juegoActual: "",
+        juegoActual,
 
-        juegoNuevo: "",
+        juegoNuevo,
 
       });
 
     }
+  );
+
+
+  console.log(
+    "===== TERMINALES PARSER ====="
+  );
+
+  console.table(
+    terminales
+  );
+
+
+  return terminales;
+}
+
+
+/*
+=====================================================
+INDICACIONES ESPECIALES
+=====================================================
+*/
+
+function extraerIndicaciones(texto) {
+
+  let match =
+    texto.match(
+      /Special\s*Indications\s*:\s*(.*?)(?=\s+Status\s*:|This\s+Email|$)/i
+    );
+
+
+  if (!match) {
+
+    match =
+      texto.match(
+        /Indicaciones\s*Especiales\s*:\s*(.*?)(?=\s+Status\s*:|$)/i
+      );
 
   }
 
 
-  return terminales;
+  if (!match) {
+    return "";
+  }
+
+
+  return limpiar(
+    match[1]
+  );
+}
+
+
+/*
+=====================================================
+BUSCAR
+=====================================================
+*/
+
+function buscar(
+  texto,
+  regex
+) {
+
+  const resultado =
+    texto.match(regex);
+
+
+  if (
+    !resultado ||
+    !resultado[1]
+  ) {
+
+    return "";
+
+  }
+
+
+  return limpiar(
+    resultado[1]
+  );
+}
+
+
+/*
+=====================================================
+LIMPIAR
+=====================================================
+*/
+
+function limpiar(valor) {
+
+  if (!valor) {
+    return "";
+  }
+
+
+  return String(valor)
+    .replace(
+      /\u00A0/g,
+      " "
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
+    .trim();
+}
+
+
+/*
+=====================================================
+NORMALIZAR
+=====================================================
+*/
+
+function normalizarTexto(texto) {
+
+  if (!texto) {
+    return "";
+  }
+
+
+  return String(texto)
+    .replace(
+      /\r/g,
+      " "
+    )
+    .replace(
+      /\n/g,
+      " "
+    )
+    .replace(
+      /\u00A0/g,
+      " "
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
+    .trim();
+}
+
+
+/*
+=====================================================
+RESULTADO VACÍO
+=====================================================
+*/
+
+function crearResultadoVacio() {
+
+  return {
+
+    af: "",
+
+    proyecto: "",
+
+    sala: "",
+
+    tipoActividad: "",
+
+    protocolo: "",
+
+    razon: "",
+
+    motivo: "",
+
+    fechaLimite: "",
+
+    cliente: "",
+
+    contacto: "",
+
+    correo: "",
+
+    indicacionesEspeciales: "",
+
+    terminales: [],
+
+  };
 }

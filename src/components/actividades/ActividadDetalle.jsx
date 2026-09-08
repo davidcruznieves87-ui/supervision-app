@@ -562,6 +562,7 @@ const desbloquearEjecucion = () => {
 </div>
 
 {/* TERMINALES */}
+{/* TERMINALES */}
 
 {datos.terminales?.length > 0 && (
 
@@ -575,10 +576,13 @@ const desbloquearEjecucion = () => {
     }}
   >
 
+    {/* ENCABEZADO */}
+
     <div
       style={{
         display: "flex",
         alignItems: "center",
+        justifyContent: "space-between",
         gap: 12,
         marginBottom: 20,
       }}
@@ -586,79 +590,254 @@ const desbloquearEjecucion = () => {
 
       <div
         style={{
-          width: 48,
-          height: 48,
-          borderRadius: "50%",
-          background: "#EEF2FF",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
-          fontSize: 24,
+          gap: 12,
         }}
       >
-        🎰
+
+        <div
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: "50%",
+            background: "#EEF2FF",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 24,
+          }}
+        >
+          🎰
+        </div>
+
+        <div>
+
+          <h3
+            style={{
+              margin: 0,
+            }}
+          >
+            Terminales
+          </h3>
+
+          <div
+            style={{
+              fontSize: 12,
+              color: theme.colors.textLight,
+              marginTop: 3,
+            }}
+          >
+            Cambios indicados en la AF
+          </div>
+
+        </div>
+
       </div>
 
-      <h3
+
+      {/* CONTADOR */}
+
+      <div
         style={{
-          margin: 0,
+          background: "#E2E8F0",
+          borderRadius: 20,
+          padding: "5px 12px",
+          fontSize: 12,
+          fontWeight: 800,
+          color: theme.colors.text,
         }}
       >
-        Terminales
-      </h3>
+        {datos.terminales.length}
+      </div>
 
     </div>
+
+
+    {/* GRID TERMINALES */}
 
     <div
       style={{
         display: "grid",
         gridTemplateColumns:
-          "repeat(auto-fit,minmax(220px,1fr))",
+          "repeat(auto-fit,minmax(280px,1fr))",
         gap: 12,
       }}
     >
 
       {datos.terminales.map(
-        (terminal, index) => (
+        (terminal, index) => {
 
-          <div
-            key={index}
-            style={{
-              background: "#fff",
-              border:
-                "1px solid #E2E8F0",
-              borderRadius: 12,
-              padding: 15,
-            }}
-          >
+          const tieneCambio =
+            Boolean(
+              terminal.juegoNuevo
+            );
 
-            <div>
-              <strong>
-                SN:
-              </strong>
-              {" "}
-              {terminal.sn}
+          return (
+
+            <div
+              key={
+                `${terminal.sn}-${index}`
+              }
+              style={{
+                background: "#FFFFFF",
+                border:
+                  "1px solid #E2E8F0",
+                borderRadius: 12,
+                padding: 15,
+              }}
+            >
+
+              {/* DATOS TERMINAL */}
+
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "6px 16px",
+                  fontSize: 13,
+                }}
+              >
+
+                <div>
+                  <strong>
+                    SN:
+                  </strong>{" "}
+                  {terminal.sn || "-"}
+                </div>
+
+
+                <div>
+                  <strong>
+                    VLT:
+                  </strong>{" "}
+                  {terminal.vlt || "-"}
+                </div>
+
+
+                <div>
+                  <strong>
+                    LOC:
+                  </strong>{" "}
+                  {terminal.loc || "-"}
+                </div>
+
+              </div>
+
+
+              {/* CAMBIO DE JUEGO */}
+
+              {terminal.juegoActual && (
+
+                <div
+                  style={{
+                    marginTop: 12,
+                    paddingTop: 12,
+                    borderTop:
+                      "1px solid #E2E8F0",
+                  }}
+                >
+
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color:
+                        theme.colors.textLight,
+                      marginBottom: 6,
+                      fontWeight: 700,
+                      textTransform:
+                        "uppercase",
+                    }}
+                  >
+                    {tieneCambio
+                      ? "Cambio de juego"
+                      : "Juego actual"}
+                  </div>
+
+
+                  {tieneCambio ? (
+
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        gap: 8,
+                        fontWeight: 800,
+                        fontSize: 14,
+                        lineHeight: 1.4,
+                      }}
+                    >
+
+                      {/* JUEGO ACTUAL */}
+
+                      <span>
+                        {
+                          terminal.juegoActual
+                        }
+                      </span>
+
+
+                      {/* FLECHA */}
+
+                      <span
+                        style={{
+                          color:
+                            theme.colors.primary ||
+                            "#06B6D4",
+                          fontSize: 18,
+                          fontWeight: 900,
+                        }}
+                      >
+                        →
+                      </span>
+
+
+                      {/* JUEGO NUEVO */}
+
+                      <span
+                        style={{
+                          color:
+                            theme.colors.primary ||
+                            "#06B6D4",
+                        }}
+                      >
+                        {
+                          terminal.juegoNuevo
+                        }
+                      </span>
+
+                    </div>
+
+                  ) : (
+
+                    /*
+                    Para RETIRO TOTAL u otra AF
+                    donde no existe juego nuevo.
+                    */
+
+                    <div
+                      style={{
+                        fontWeight: 800,
+                        fontSize: 14,
+                      }}
+                    >
+                      {
+                        terminal.juegoActual
+                      }
+                    </div>
+
+                  )}
+
+                </div>
+
+              )}
+
             </div>
 
-            <div>
-              <strong>
-                VLT:
-              </strong>
-              {" "}
-              {terminal.vlt}
-            </div>
+          );
 
-            <div>
-              <strong>
-                LOC:
-              </strong>
-              {" "}
-              {terminal.loc}
-            </div>
-
-          </div>
-
-        )
+        }
       )}
 
     </div>
