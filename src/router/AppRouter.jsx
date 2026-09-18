@@ -1,4 +1,3 @@
-
 import {
   BrowserRouter,
   Routes,
@@ -6,13 +5,24 @@ import {
   Navigate,
 } from "react-router-dom";
 
-// 🔥 LAYOUT
+// =====================================================
+// LAYOUT
+// =====================================================
+
 import MainLayout from "../layouts/MainLayout";
 
-// 🔥 ROUTE
+
+// =====================================================
+// PROTECTED ROUTE
+// =====================================================
+
 import ProtectedRoute from "./ProtectedRoute";
 
-// 🔥 PAGINAS
+
+// =====================================================
+// PAGINAS
+// =====================================================
+
 import DashboardPage from "../pages/DashboardPage";
 
 import ActividadesPage from "../pages/ActividadesPage";
@@ -33,12 +43,10 @@ import MantenimientoPage from "../pages/MantenimientoPage";
 
 import MantenimientoDashboard from "../pages/MantenimientoDashboard";
 
-import ControlReportesPage from "../pages/ControlReportesPage";
-
-import LayoutsPage from "../pages/LayoutsPage";
-
-// 🔍 NUEVO COMPARADOR JSON
 import ResumenJsonPage from "../pages/ResumenJsonPage";
+
+// 💰 NOMINA
+import NominaPage from "../pages/NominaPage";
 
 
 function AppRouter({
@@ -55,7 +63,10 @@ function AppRouter({
 
         <Routes>
 
-          {/* 🔥 DASHBOARD */}
+          {/* =================================================
+              DASHBOARD
+          ================================================= */}
+
           <Route
             path="/"
             element={
@@ -76,7 +87,10 @@ function AppRouter({
           />
 
 
-          {/* 🔥 SUPERVISIONES */}
+          {/* =================================================
+              SUPERVISIONES
+          ================================================= */}
+
           <Route
             path="/supervisiones"
             element={
@@ -96,7 +110,10 @@ function AppRouter({
           />
 
 
-          {/* 🔥 CONECTIVIDAD */}
+          {/* =================================================
+              CONECTIVIDAD
+          ================================================= */}
+
           <Route
             path="/conectividad"
             element={
@@ -117,7 +134,10 @@ function AppRouter({
           />
 
 
-          {/* 🔥 HISTORIAL */}
+          {/* =================================================
+              HISTORIAL
+          ================================================= */}
+
           <Route
             path="/historial"
             element={
@@ -140,7 +160,10 @@ function AppRouter({
           />
 
 
-          {/* 🔥 ADMIN */}
+          {/* =================================================
+              ADMINISTRACION
+          ================================================= */}
+
           <Route
             path="/admin"
             element={
@@ -185,7 +208,10 @@ function AppRouter({
           />
 
 
-          {/* 🔥 MANTENIMIENTO */}
+          {/* =================================================
+              MANTENIMIENTO
+          ================================================= */}
+
           <Route
             path="/mantenimiento"
             element={
@@ -205,28 +231,10 @@ function AppRouter({
           />
 
 
-          {/* 🔥 CONTROL REPORTES */}
-          <Route
-            path="/control-reportes"
-            element={
+          {/* =================================================
+              COMPARADOR JSON
+          ================================================= */}
 
-              <ProtectedRoute
-                allowedRoles={[
-                  "supervisor",
-                  "admin",
-                  "superadmin",
-                ]}
-              >
-
-                <ControlReportesPage />
-
-              </ProtectedRoute>
-
-            }
-          />
-
-
-          {/* 🔍 COMPARADOR JSON */}
           <Route
             path="/comparador-json"
             element={
@@ -247,7 +255,10 @@ function AppRouter({
           />
 
 
-          {/* 🔥 DASHBOARD MTTO */}
+          {/* =================================================
+              DASHBOARD MANTENIMIENTO
+          ================================================= */}
+
           <Route
             path="/dashboard-mantenimiento"
             element={
@@ -269,7 +280,10 @@ function AppRouter({
           />
 
 
-          {/* 🔥 HISTORIAL ROTACIONES */}
+          {/* =================================================
+              HISTORIAL ROTACIONES
+          ================================================= */}
+
           <Route
             path="/historial-rotaciones"
             element={
@@ -289,7 +303,10 @@ function AppRouter({
           />
 
 
-          {/* 🔥 DASHBOARD EJECUTIVO */}
+          {/* =================================================
+              DASHBOARD EJECUTIVO
+          ================================================= */}
+
           <Route
             path="/dashboard-ejecutivo"
             element={
@@ -310,7 +327,10 @@ function AppRouter({
           />
 
 
-          {/* 🔥 ACTIVIDADES */}
+          {/* =================================================
+              ACTIVIDADES
+          ================================================= */}
+
           <Route
             path="/actividades"
             element={
@@ -331,20 +351,22 @@ function AppRouter({
           />
 
 
-          {/* 🔥 LAYOUTS */}
+          {/* =================================================
+              NOMINA
+          ================================================= */}
+
           <Route
-            path="/layouts"
+            path="/nomina"
             element={
 
               <ProtectedRoute
                 allowedRoles={[
                   "supervisor",
-                  "admin",
                   "superadmin",
                 ]}
               >
 
-                <LayoutsPage />
+                <NominaPage />
 
               </ProtectedRoute>
 
@@ -352,11 +374,17 @@ function AppRouter({
           />
 
 
-          {/* 🔥 FALLBACK */}
+          {/* =================================================
+              FALLBACK
+          ================================================= */}
+
           <Route
             path="*"
             element={
-              <Navigate to="/" />
+              <Navigate
+                to="/"
+                replace
+              />
             }
           />
 
@@ -365,7 +393,10 @@ function AppRouter({
       </MainLayout>
 
     </BrowserRouter>
+
   );
+
 }
+
 
 export default AppRouter;

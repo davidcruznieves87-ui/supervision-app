@@ -1,4 +1,3 @@
-
 import {
   Link,
   useLocation,
@@ -13,22 +12,22 @@ import {
   auth,
 } from "../firebase";
 
+import theme from "../styles/theme";
+
 
 function MainLayout({
-
   children,
-
   usuario,
 }) {
 
-  const location =
-    useLocation();
-
-  const navigate =
-    useNavigate();
+  const location = useLocation();
+  const navigate = useNavigate();
 
 
-  // 🔥 NORMALIZAR ROL
+  // =====================================================
+  // NORMALIZAR ROL
+  // =====================================================
+
   const rol = (
     usuario?.rol || ""
   )
@@ -46,7 +45,10 @@ function MainLayout({
   );
 
 
-  // 🔥 MENU
+  // =====================================================
+  // MENU
+  // =====================================================
+
   let menu = [];
 
 
@@ -54,9 +56,7 @@ function MainLayout({
   // SUPERADMIN
   // =====================================================
 
-  if (
-    rol === "superadmin"
-  ) {
+  if (rol === "superadmin") {
 
     menu = [
 
@@ -96,11 +96,6 @@ function MainLayout({
       },
 
       {
-        nombre: "📦 Control Reportes",
-        ruta: "/control-reportes",
-      },
-
-      {
         nombre: "🔍 Comparador JSON",
         ruta: "/comparador-json",
       },
@@ -116,8 +111,8 @@ function MainLayout({
       },
 
       {
-        nombre: "📐 Layouts",
-        ruta: "/layouts",
+        nombre: "💰 Nómina",
+        ruta: "/nomina",
       },
 
     ];
@@ -128,9 +123,7 @@ function MainLayout({
   // SUPERVISOR
   // =====================================================
 
-  else if (
-    rol === "supervisor"
-  ) {
+  else if (rol === "supervisor") {
 
     menu = [
 
@@ -170,11 +163,6 @@ function MainLayout({
       },
 
       {
-        nombre: "📦 Control Reportes",
-        ruta: "/control-reportes",
-      },
-
-      {
         nombre: "🔍 Comparador JSON",
         ruta: "/comparador-json",
       },
@@ -190,8 +178,8 @@ function MainLayout({
       },
 
       {
-        nombre: "📐 Layouts",
-        ruta: "/layouts",
+        nombre: "💰 Nómina",
+        ruta: "/nomina",
       },
 
     ];
@@ -202,9 +190,7 @@ function MainLayout({
   // ADMIN
   // =====================================================
 
-  else if (
-    rol === "admin"
-  ) {
+  else if (rol === "admin") {
 
     menu = [
 
@@ -234,11 +220,6 @@ function MainLayout({
       },
 
       {
-        nombre: "📦 Control Reportes",
-        ruta: "/control-reportes",
-      },
-
-      {
         nombre: "🔍 Comparador JSON",
         ruta: "/comparador-json",
       },
@@ -253,11 +234,6 @@ function MainLayout({
         ruta: "/actividades",
       },
 
-      {
-        nombre: "📐 Layouts",
-        ruta: "/layouts",
-      },
-
     ];
   }
 
@@ -266,26 +242,18 @@ function MainLayout({
   // TECNICO
   // =====================================================
 
-  else if (
-    rol === "tecnico"
-  ) {
+  else if (rol === "tecnico") {
 
     menu = [
 
       {
-        nombre:
-          "🔨 Mantenimiento",
-
-        ruta:
-          "/mantenimiento",
+        nombre: "🔨 Mantenimiento",
+        ruta: "/mantenimiento",
       },
 
       {
-        nombre:
-          "📈 Dashboard MTTO",
-
-        ruta:
-          "/dashboard-mantenimiento",
+        nombre: "📈 Dashboard MTTO",
+        ruta: "/dashboard-mantenimiento",
       },
 
     ];
@@ -293,32 +261,27 @@ function MainLayout({
 
 
   // =====================================================
-  // LOGOUT
+  // CERRAR SESION
   // =====================================================
 
-  const cerrarSesion =
-    async () => {
+  const cerrarSesion = async () => {
 
-      try {
+    try {
 
-        await signOut(
-          auth
-        );
+      await signOut(auth);
 
-        navigate(
-          "/login"
-        );
+      navigate("/login");
 
-      } catch (
+    } catch (error) {
+
+      console.error(
+        "Error al cerrar sesión:",
         error
-      ) {
+      );
 
-        console.log(
-          error
-        );
+    }
 
-      }
-    };
+  };
 
 
   // =====================================================
@@ -330,60 +293,55 @@ function MainLayout({
     <div
       style={{
 
-        display:
-          "flex",
+        display: "flex",
 
-        minHeight:
-          "100vh",
+        minHeight: "100vh",
 
         background:
-          "#0F172A",
+          theme.colors.sidebar,
 
       }}
     >
 
-      {/* 🔥 SIDEBAR */}
+      {/* =================================================
+          SIDEBAR
+      ================================================= */}
 
       <aside
         style={{
 
-          width:
-            "260px",
+          width: "260px",
 
           background:
-            "#020617",
+            theme.sidebar.container.background,
 
-          padding:
-            "20px",
+          padding: "20px",
 
-          color:
-            "white",
+          color: "white",
 
           borderRight:
-            "1px solid #1E293B",
+            theme.sidebar.container.borderRight,
 
-          boxSizing:
-            "border-box",
+          boxShadow:
+            theme.sidebar.container.boxShadow,
 
-          flexShrink:
-            0,
+          boxSizing: "border-box",
+
+          flexShrink: 0,
 
         }}
       >
 
-        {/* 🔥 TITULO */}
+        {/* TITULO */}
 
         <h1
           style={{
 
-            marginBottom:
-              "40px",
+            marginBottom: "40px",
 
-            fontSize:
-              "28px",
+            fontSize: "28px",
 
-            fontWeight:
-              "bold",
+            fontWeight: "900",
 
           }}
         >
@@ -393,102 +351,100 @@ function MainLayout({
         </h1>
 
 
-        {/* 🔥 MENU */}
+        {/* MENU */}
 
         <nav
           style={{
 
-            display:
-              "flex",
+            display: "flex",
 
-            flexDirection:
-              "column",
+            flexDirection: "column",
 
-            gap:
-              "15px",
+            gap: "15px",
 
           }}
         >
 
           {
             menu.map(
-              (item) => (
+              (item) => {
 
-                <Link
-                  key={
-                    item.ruta
-                  }
+                const activo =
+                  location.pathname ===
+                  item.ruta;
 
-                  to={
-                    item.ruta
-                  }
+                return (
 
-                  style={{
+                  <Link
+                    key={item.ruta}
 
-                    textDecoration:
-                      "none",
+                    to={item.ruta}
 
-                    background:
+                    style={{
 
-                      location.pathname ===
-                      item.ruta
+                      ...theme.sidebar.link,
 
-                        ? "#2563EB"
+                      display: "block",
 
-                        : "#132238",
+                      background: activo
 
-                    color:
-                      "white",
+                        ? "linear-gradient(135deg,#06B6D4,#2563EB)"
 
-                    padding:
-                      "18px",
+                        : theme.sidebar.link.background,
 
-                    borderRadius:
-                      "15px",
+                      color: "white",
 
-                    fontWeight:
-                      "bold",
+                      padding: "18px",
 
-                  }}
-                >
+                      borderRadius: "15px",
 
-                  {
-                    item.nombre
-                  }
+                      boxShadow: activo
+                        ? "0 8px 20px rgba(37,99,235,0.20)"
+                        : "none",
 
-                </Link>
+                    }}
+                  >
 
-              )
+                    {item.nombre}
+
+                  </Link>
+
+                );
+
+              }
             )
           }
 
         </nav>
 
 
-        {/* 🔥 USUARIO */}
+        {/* =================================================
+            USUARIO
+        ================================================= */}
 
         <div
           style={{
 
-            marginTop:
-              "40px",
+            marginTop: "40px",
 
-            padding:
-              "15px",
+            padding: "15px",
 
             background:
-              "#111827",
+              "rgba(255,255,255,0.05)",
 
-            borderRadius:
-              "15px",
+            borderRadius: "15px",
+
+            border:
+              "1px solid rgba(255,255,255,0.05)",
 
           }}
         >
 
           <div
             style={{
-              fontWeight:
-                "bold",
+
+              fontWeight: "800",
+
             }}
           >
 
@@ -503,66 +459,38 @@ function MainLayout({
           <div
             style={{
 
-              marginTop:
-                "5px",
+              marginTop: "5px",
 
-              color:
-                "#94A3B8",
+              color: "#94A3B8",
 
-              fontSize:
-                "14px",
+              fontSize: "14px",
 
             }}
           >
 
-            Rol:
-            {" "}
-            {
-              rol ||
-              "sin rol"
-            }
+            Rol: {rol || "sin rol"}
 
           </div>
 
         </div>
 
 
-        {/* 🔥 LOGOUT */}
+        {/* =================================================
+            CERRAR SESION
+        ================================================= */}
 
         <button
-
           onClick={
             cerrarSesion
           }
 
           style={{
 
-            marginTop:
-              "20px",
+            ...theme.button.danger,
 
-            width:
-              "100%",
+            marginTop: "20px",
 
-            background:
-              "#EF4444",
-
-            border:
-              "none",
-
-            color:
-              "white",
-
-            padding:
-              "16px",
-
-            borderRadius:
-              "15px",
-
-            fontWeight:
-              "bold",
-
-            cursor:
-              "pointer",
+            width: "100%",
 
           }}
         >
@@ -574,22 +502,21 @@ function MainLayout({
       </aside>
 
 
-      {/* 🔥 CONTENIDO */}
+      {/* =================================================
+          CONTENIDO
+      ================================================= */}
 
       <main
         style={{
 
-          flex:
-            1,
+          flex: 1,
 
-          minWidth:
-            0,
+          minWidth: 0,
 
-          padding:
-            "20px",
+          padding: "20px",
 
           background:
-            "#F1F5F9",
+            theme.colors.background,
 
         }}
       >
@@ -599,9 +526,10 @@ function MainLayout({
       </main>
 
     </div>
+
   );
+
 }
 
 
 export default MainLayout;
-
