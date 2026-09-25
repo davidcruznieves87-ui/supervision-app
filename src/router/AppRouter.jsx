@@ -5,6 +5,7 @@ import {
   Navigate,
 } from "react-router-dom";
 
+
 // =====================================================
 // LAYOUT
 // =====================================================
@@ -45,8 +46,20 @@ import MantenimientoDashboard from "../pages/MantenimientoDashboard";
 
 import ResumenJsonPage from "../pages/ResumenJsonPage";
 
-// 💰 NOMINA
+
+// =====================================================
+// NOMINA
+// =====================================================
+
 import NominaPage from "../pages/NominaPage";
+
+
+// =====================================================
+// AUDITORIA DE CORREOS
+// =====================================================
+
+import AuditoriaCorreosPage from "../pages/AuditoriaCorreosPage";
+
 
 
 function AppRouter({
@@ -62,6 +75,7 @@ function AppRouter({
       >
 
         <Routes>
+
 
           {/* =================================================
               DASHBOARD
@@ -375,18 +389,45 @@ function AppRouter({
 
 
           {/* =================================================
+              AUDITORIA DE CORREOS
+          ================================================= */}
+
+          <Route
+            path="/auditoria-correos"
+            element={
+
+              <ProtectedRoute
+                allowedRoles={[
+                  "supervisor",
+                  "admin",
+                  "superadmin",
+                ]}
+              >
+
+                <AuditoriaCorreosPage />
+
+              </ProtectedRoute>
+
+            }
+          />
+
+
+          {/* =================================================
               FALLBACK
           ================================================= */}
 
           <Route
             path="*"
             element={
+
               <Navigate
                 to="/"
                 replace
               />
+
             }
           />
+
 
         </Routes>
 

@@ -115,6 +115,12 @@ function MainLayout({
         ruta: "/nomina",
       },
 
+      {
+  nombre: "📧 Auditoría Correos",
+  ruta: "/auditoria-correos",
+},
+
+
     ];
   }
 
@@ -182,6 +188,12 @@ function MainLayout({
         ruta: "/nomina",
       },
 
+      {
+  nombre: "📧 Auditoría Correos",
+  ruta: "/auditoria-correos",
+},
+
+
     ];
   }
 
@@ -233,6 +245,11 @@ function MainLayout({
         nombre: "📋 Actividades",
         ruta: "/actividades",
       },
+
+{
+  nombre: "📧 Auditoría Correos",
+  ruta: "/auditoria-correos",
+},
 
     ];
   }
