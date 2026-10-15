@@ -1,306 +1,239 @@
+// Sistema de Supervisión — Theme Ejecutivo Moderno
+// Compatible con las propiedades existentes. Solo presentación, sin lógica de negocio.
 const theme = {
-
   colors: {
-
     background: "#F1F5F9",
-
     sidebar: "#0F172A",
-
     card: "#FFFFFF",
-
     primary: "#06B6D4",
-
     primaryHover: "#0891B2",
-
     success: "#22C55E",
-
     error: "#EF4444",
-
     warning: "#F59E0B",
-
     text: "#0F172A",
-
     textLight: "#64748B",
-
     border: "#E2E8F0",
-
+    // Tokens adicionales para las nuevas pantallas.
+    navy: "#020617",
+    surface: "#F8FAFC",
+    blue: "#2563EB",
+    successSoft: "#DCFCE7",
+    warningSoft: "#FEF3C7",
+    errorSoft: "#FEE2E2",
   },
 
   layout: {
-
     page: {
-
       minHeight: "100vh",
-
-      background:
-        "linear-gradient(to bottom right, #F8FAFC, #EEF2FF)",
-
+      background: "linear-gradient(135deg,#F8FAFC 0%,#F1F5F9 65%,#EEF2FF 100%)",
       padding: "24px",
-
+      boxSizing: "border-box",
     },
-
-    content: {
-
-      padding: "10px",
-
-    },
-
+    content: { padding: "10px" },
   },
 
   sidebar: {
-
     container: {
-
       width: "240px",
-
-      background:
-        "linear-gradient(180deg,#020617,#0F172A)",
-
+      background: "linear-gradient(180deg,#020617,#0F172A)",
       color: "white",
-
       padding: "24px",
-
       display: "flex",
-
       flexDirection: "column",
-
-      gap: "20px",
-
-      borderRight:
-        "1px solid rgba(255,255,255,0.06)",
-
-      boxShadow:
-        "0 0 30px rgba(0,0,0,0.25)",
-
+      gap: "16px",
+      borderRight: "1px solid rgba(255,255,255,0.07)",
+      boxShadow: "4px 0 24px rgba(15,23,42,0.12)",
     },
-
     link: {
-
       color: "#E2E8F0",
-
       textDecoration: "none",
-
-      padding: "14px 16px",
-
-      borderRadius: "16px",
-
-      background: "rgba(255,255,255,0.04)",
-
+      padding: "12px 14px",
+      borderRadius: "12px",
+      background: "rgba(255,255,255,0.035)",
       fontWeight: "700",
-
-      transition: "0.3s",
-
-      border:
-        "1px solid rgba(255,255,255,0.04)",
-
+      transition: "background 0.2s ease, border-color 0.2s ease",
+      border: "1px solid rgba(255,255,255,0.05)",
     },
-
+    activeLink: {
+      color: "#FFFFFF",
+      background: "linear-gradient(90deg,rgba(6,182,212,0.28),rgba(37,99,235,0.15))",
+      border: "1px solid rgba(34,211,238,0.32)",
+      borderLeft: "3px solid #22D3EE",
+      borderRadius: "12px",
+    },
   },
 
   card: {
-
     background: "#FFFFFF",
-
-    borderRadius: "28px",
-
-    padding: "24px",
-
-    boxShadow:
-      "0 10px 30px rgba(15,23,42,0.08)",
-
-    border:
-      "1px solid #E2E8F0",
-
-    marginBottom: "24px",
-
+    borderRadius: "16px",
+    padding: "22px",
+    boxShadow: "0 4px 18px rgba(15,23,42,0.055)",
+    border: "1px solid #E2E8F0",
+    marginBottom: "20px",
   },
 
   button: {
-
     primary: {
-
-      padding: "14px 22px",
-
-      background:
-        "linear-gradient(135deg,#06B6D4,#2563EB)",
-
+      padding: "11px 18px",
+      background: "linear-gradient(135deg,#0891B2,#2563EB)",
       color: "white",
-
       border: "none",
-
-      borderRadius: "18px",
-
+      borderRadius: "11px",
       cursor: "pointer",
-
       fontWeight: "800",
-
-      fontSize: "15px",
-
-      boxShadow:
-        "0 8px 20px rgba(37,99,235,0.25)",
-
-      transition: "0.3s",
-
+      fontSize: "14px",
+      boxShadow: "0 4px 12px rgba(37,99,235,0.16)",
+      transition: "filter 0.2s ease, transform 0.2s ease",
     },
-
     success: {
-
-      padding: "14px 22px",
-
-      background:
-        "linear-gradient(135deg,#22C55E,#16A34A)",
-
+      padding: "11px 18px",
+      background: "linear-gradient(135deg,#22C55E,#16A34A)",
       color: "white",
-
       border: "none",
-
-      borderRadius: "18px",
-
+      borderRadius: "11px",
       cursor: "pointer",
-
       fontWeight: "800",
-
-      fontSize: "15px",
-
-      boxShadow:
-        "0 8px 20px rgba(34,197,94,0.25)",
-
-      transition: "0.3s",
-
+      fontSize: "14px",
+      boxShadow: "0 4px 12px rgba(34,197,94,0.14)",
+      transition: "filter 0.2s ease, transform 0.2s ease",
     },
-
     danger: {
-
-      padding: "14px 22px",
-
-      background:
-        "linear-gradient(135deg,#EF4444,#DC2626)",
-
+      padding: "11px 18px",
+      background: "linear-gradient(135deg,#EF4444,#DC2626)",
       color: "white",
-
       border: "none",
-
-      borderRadius: "18px",
-
+      borderRadius: "11px",
       cursor: "pointer",
-
       fontWeight: "800",
-
-      fontSize: "15px",
-
-      boxShadow:
-        "0 8px 20px rgba(239,68,68,0.25)",
-
-      transition: "0.3s",
-
+      fontSize: "14px",
+      boxShadow: "0 4px 12px rgba(239,68,68,0.14)",
+      transition: "filter 0.2s ease, transform 0.2s ease",
     },
-
+    secondary: {
+      padding: "11px 18px",
+      background: "#FFFFFF",
+      color: "#0F172A",
+      border: "1px solid #CBD5E1",
+      borderRadius: "11px",
+      cursor: "pointer",
+      fontWeight: "700",
+      fontSize: "14px",
+      transition: "background 0.2s ease",
+    },
   },
 
   input: {
-
     width: "100%",
-
-    padding: "16px",
-
-    borderRadius: "18px",
-
+    padding: "12px 14px",
+    borderRadius: "11px",
     border: "1px solid #CBD5E1",
-
     marginTop: "8px",
-
     marginBottom: "16px",
-
     boxSizing: "border-box",
-
     background: "#FFFFFF",
-
-    fontSize: "15px",
-
+    color: "#0F172A",
+    fontSize: "14px",
     outline: "none",
-
-    transition: "0.3s",
-
-    boxShadow:
-      "0 2px 10px rgba(0,0,0,0.03)",
-
+    transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+    boxShadow: "0 1px 3px rgba(15,23,42,0.035)",
   },
 
   title: {
-
-    fontSize: "32px",
-
+    fontSize: "30px",
     fontWeight: "900",
-
     color: "#0F172A",
-
-    marginBottom: "24px",
-
+    marginBottom: "20px",
     letterSpacing: "-0.5px",
-
   },
 
   message: {
-
     success: {
-
       background: "#DCFCE7",
-
       color: "#166534",
-
-      padding: "16px",
-
-      borderRadius: "18px",
-
-      fontWeight: "800",
-
-      marginBottom: "20px",
-
-      border:
-        "1px solid #BBF7D0",
-
+      padding: "13px 15px",
+      borderRadius: "11px",
+      fontWeight: "700",
+      marginBottom: "16px",
+      border: "1px solid #BBF7D0",
     },
-
     error: {
-
       background: "#FEE2E2",
-
       color: "#991B1B",
-
-      padding: "16px",
-
-      borderRadius: "18px",
-
-      fontWeight: "800",
-
-      marginBottom: "20px",
-
-      border:
-        "1px solid #FECACA",
-
+      padding: "13px 15px",
+      borderRadius: "11px",
+      fontWeight: "700",
+      marginBottom: "16px",
+      border: "1px solid #FECACA",
     },
-
     warning: {
-
       background: "#FEF3C7",
-
       color: "#92400E",
-
-      padding: "16px",
-
-      borderRadius: "18px",
-
-      fontWeight: "800",
-
-      marginBottom: "20px",
-
-      border:
-        "1px solid #FDE68A",
-
+      padding: "13px 15px",
+      borderRadius: "11px",
+      fontWeight: "700",
+      marginBottom: "16px",
+      border: "1px solid #FDE68A",
     },
-
   },
 
+  // Estilos opcionales para integrar gradualmente en AF, TC, SF y dashboards.
+  table: {
+    container: {
+      overflowX: "auto",
+      background: "#FFFFFF",
+      border: "1px solid #E2E8F0",
+      borderRadius: "14px",
+    },
+    table: { width: "100%", borderCollapse: "collapse", textAlign: "left" },
+    header: {
+      padding: "12px 14px",
+      background: "#F1F5F9",
+      color: "#475569",
+      fontSize: "12px",
+      fontWeight: "800",
+      borderBottom: "1px solid #E2E8F0",
+    },
+    cell: {
+      padding: "12px 14px",
+      color: "#0F172A",
+      fontSize: "13px",
+      borderBottom: "1px solid #E2E8F0",
+    },
+  },
+  kpi: {
+    card: {
+      background: "#FFFFFF",
+      border: "1px solid #E2E8F0",
+      borderRadius: "14px",
+      padding: "18px",
+      boxShadow: "0 3px 12px rgba(15,23,42,0.045)",
+    },
+    label: { color: "#64748B", fontSize: "12px", fontWeight: "700" },
+    value: { color: "#0F172A", fontSize: "28px", fontWeight: "900" },
+  },
+  modal: {
+    overlay: {
+      position: "fixed",
+      inset: 0,
+      background: "rgba(2,6,23,0.72)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "16px",
+      zIndex: 2000,
+    },
+    panel: {
+      background: "#FFFFFF",
+      border: "1px solid #E2E8F0",
+      borderRadius: "18px",
+      padding: "22px",
+      width: "min(960px,100%)",
+      maxHeight: "92vh",
+      overflowY: "auto",
+      boxSizing: "border-box",
+      boxShadow: "0 24px 65px rgba(2,6,23,0.24)",
+    },
+  },
 };
 
 export default theme;
